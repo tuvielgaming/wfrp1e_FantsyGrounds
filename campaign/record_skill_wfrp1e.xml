@@ -61,7 +61,7 @@
         <sheetdata>
 
             <label name="rules_id_label">
-                <bounds>10,10,120,20</bounds>
+                <bounds>10,10,140,20</bounds>
 
                 <static
                     textres="wfrp1e_skill_rules_id"
@@ -69,12 +69,12 @@
             </label>
 
             <basicstring name="rulesId">
-                <bounds>140,8,480,24</bounds>
+                <bounds>160,8,460,24</bounds>
             </basicstring>
 
 
             <label name="specialisation_label">
-                <bounds>10,44,120,20</bounds>
+                <bounds>10,44,140,20</bounds>
 
                 <static
                     textres="wfrp1e_skill_specialisation"
@@ -82,12 +82,12 @@
             </label>
 
             <basicstring name="specialisation">
-                <bounds>140,42,480,24</bounds>
+                <bounds>160,42,460,24</bounds>
             </basicstring>
 
 
             <label name="description_label">
-                <bounds>10,82,120,20</bounds>
+                <bounds>10,82,140,20</bounds>
 
                 <static
                     textres="wfrp1e_skill_description"
