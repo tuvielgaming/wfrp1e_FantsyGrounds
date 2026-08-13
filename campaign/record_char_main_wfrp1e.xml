@@ -203,8 +203,10 @@
                 centered across the full 38 px column.
 
                 When a Career requirement exists, the abbreviation and
-                advancement state marker are separate controls so only
-                the marker is colored.
+                advancement state marker are positioned at runtime as a
+                centered combined group. One-, two- and three-letter
+                abbreviations therefore use different internal geometry
+                while the outer 38 px column remains unchanged.
             -->
 
             <stringc_noframe_static name="characteristic_id">
@@ -213,13 +215,13 @@
             </stringc_noframe_static>
 
             <stringc_noframe_static name="characteristic_id_with_state">
-                <bounds>0,0,22,20</bounds>
+                <bounds>0,0,23,20</bounds>
                 <center />
                 <invisible />
             </stringc_noframe_static>
 
             <stringc_noframe_static name="advance_state_marker">
-                <bounds>24,0,14,20</bounds>
+                <bounds>23,0,15,20</bounds>
                 <center />
                 <invisible />
             </stringc_noframe_static>
@@ -227,17 +229,18 @@
             <!--
                 Dedicated completion indicator.
 
-                This is intentionally an icon control instead of a text
-                glyph or a widget attached to the text marker. It avoids
-                font glyph limitations and keeps the check independent of
-                the [+] text control's visibility.
+                The bitmap resource is declared in graphics_wfrp1e.xml.
+                The script also resolves it explicitly at runtime and
+                repositions this control together with the abbreviation
+                layout.
             -->
 
             <genericcontrol name="advance_complete_marker">
-                <bounds>25,4,12,12</bounds>
+                <bounds>25,5,10,10</bounds>
                 <icon>wfrp1e_char_advancement_complete_icon</icon>
                 <drawmode>fit</drawmode>
                 <invisible />
+                <disabled />
             </genericcontrol>
 
             <!--
