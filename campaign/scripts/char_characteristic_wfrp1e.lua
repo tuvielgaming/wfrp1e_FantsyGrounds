@@ -30,9 +30,9 @@
     The interaction surface remains limited to the existing 38 x 20
     characteristic header.
 
-    Checkpoint #9F deliberately uses a bitmap for the completion mark.
-    The inherited sheet text font does not reliably provide a Unicode
-    check glyph, so the bitmap avoids missing-glyph square rendering.
+    The completion mark is a dedicated icon control. It is independent
+    of the text marker and therefore does not rely on Unicode font glyphs
+    or on the visibility of the [+] text control.
 ]]
 
 local sCharacteristic = nil
@@ -40,13 +40,9 @@ local sCharacteristic = nil
 local sInitialPath = nil
 local sCareerPath = nil
 local sPurchasedPath = nil
-local sExperienceTotalAwardedPath = nil
-local sExperienceSpentPath = nil
 
 local bHeaderCanPurchase = false
 local bHeaderCanRefund = false
-
-local wCompleteMarker = nil
 
 local COLOR_MARKER_NEUTRAL = "#FF000000"
 local COLOR_ADVANCE_PENDING = "#FFC00000"
@@ -72,35 +68,15 @@ end
 
 local function configureStateHeaderGeometry()
     -- Preserve the validated 38 px characteristic column.
-    -- Give the characteristic abbreviation 24 px and the smaller
-    -- action marker 14 px. This is especially important for Dex/Int/Fel.
-    characteristic_id_with_state.setStaticBounds(0, 0, 24, 20)
+    -- The abbreviation gets 22 px, followed by a 2 px visual gap,
+    -- then a compact 14 px action marker. This keeps Dex/Int/Fel
+    -- readable without widening the grid.
+    characteristic_id_with_state.setStaticBounds(0, 0, 22, 20)
     advance_state_marker.setStaticBounds(24, 0, 14, 20)
 
     if Interface.isFont("sheettextsmall") then
         advance_state_marker.setFont("sheettextsmall")
     end
-end
-
-
-local function createCompleteMarkerWidget()
-    wCompleteMarker =
-        advance_state_marker.addBitmapWidget(
-            "wfrp1e_char_advancement_complete_icon"
-        )
-
-    if not wCompleteMarker then
-        print(
-            "WFRP1E | ERROR: Could not create advancement completion marker widget."
-        )
-
-        return
-    end
-
-    wCompleteMarker.setSize(10, 10)
-    wCompleteMarker.setPosition("center", 0, 0)
-    wCompleteMarker.setEnabled(false)
-    wCompleteMarker.setVisible(false)
 end
 
 
@@ -112,9 +88,8 @@ local function setHeaderWithoutMarker()
     advance_state_marker.setColor(COLOR_MARKER_NEUTRAL)
     advance_state_marker.setVisible(false)
 
-    if wCompleteMarker then
-        wCompleteMarker.setVisible(false)
-    end
+    advance_complete_marker.setColor(COLOR_MARKER_NEUTRAL)
+    advance_complete_marker.setVisible(false)
 end
 
 
@@ -122,9 +97,7 @@ local function setHeaderPending(sColor)
     characteristic_id.setVisible(false)
     characteristic_id_with_state.setVisible(true)
 
-    if wCompleteMarker then
-        wCompleteMarker.setVisible(false)
-    end
+    advance_complete_marker.setVisible(false)
 
     advance_state_marker.setValue("[+]")
     advance_state_marker.setColor(sColor)
@@ -138,12 +111,10 @@ local function setHeaderComplete(sColor)
 
     advance_state_marker.setValue("")
     advance_state_marker.setColor(COLOR_MARKER_NEUTRAL)
-    advance_state_marker.setVisible(true)
+    advance_state_marker.setVisible(false)
 
-    if wCompleteMarker then
-        wCompleteMarker.setColor(sColor)
-        wCompleteMarker.setVisible(true)
-    end
+    advance_complete_marker.setColor(sColor)
+    advance_complete_marker.setVisible(true)
 end
 
 
@@ -259,32 +230,6 @@ function onInit()
         onCharacteristicSourceUpdated
     )
 
-    local nodeChar = getCharacterNode()
-
-    if nodeChar then
-        local nodeExperience = DB.getChild(nodeChar, "experience")
-
-        if nodeExperience then
-            sExperienceTotalAwardedPath =
-                DB.getPath(nodeExperience, "totalAwarded")
-
-            sExperienceSpentPath =
-                DB.getPath(nodeExperience, "spent")
-
-            DB.addHandler(
-                sExperienceTotalAwardedPath,
-                "onUpdate",
-                onAdvancementAvailabilityUpdated
-            )
-
-            DB.addHandler(
-                sExperienceSpentPath,
-                "onUpdate",
-                onAdvancementAvailabilityUpdated
-            )
-        end
-    end
-
     local sAbbreviation =
         Interface.getString(
             "wfrp1e_char_abbrev_"
@@ -295,7 +240,6 @@ function onInit()
     characteristic_id_with_state.setValue(sAbbreviation)
 
     configureStateHeaderGeometry()
-    createCompleteMarkerWidget()
     updateDerivedValues()
 end
 
@@ -324,32 +268,11 @@ function onClose()
             onCharacteristicSourceUpdated
         )
     end
-
-    if sExperienceTotalAwardedPath then
-        DB.removeHandler(
-            sExperienceTotalAwardedPath,
-            "onUpdate",
-            onAdvancementAvailabilityUpdated
-        )
-    end
-
-    if sExperienceSpentPath then
-        DB.removeHandler(
-            sExperienceSpentPath,
-            "onUpdate",
-            onAdvancementAvailabilityUpdated
-        )
-    end
 end
 
 
 function onCharacteristicSourceUpdated()
     updateDerivedValues()
-end
-
-
-function onAdvancementAvailabilityUpdated()
-    refreshAdvancementHeader()
 end
 
 
