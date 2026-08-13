@@ -219,10 +219,26 @@
             </stringc_noframe_static>
 
             <stringc_noframe_static name="advance_state_marker">
-                <bounds>21,0,17,20</bounds>
+                <bounds>24,0,14,20</bounds>
                 <center />
                 <invisible />
             </stringc_noframe_static>
+
+            <!--
+                Dedicated completion indicator.
+
+                This is intentionally an icon control instead of a text
+                glyph or a widget attached to the text marker. It avoids
+                font glyph limitations and keeps the check independent of
+                the [+] text control's visibility.
+            -->
+
+            <genericcontrol name="advance_complete_marker">
+                <bounds>25,4,12,12</bounds>
+                <icon>wfrp1e_char_advancement_complete_icon</icon>
+                <drawmode>fit</drawmode>
+                <invisible />
+            </genericcontrol>
 
             <!--
                 Transparent, header-only interaction surface.
