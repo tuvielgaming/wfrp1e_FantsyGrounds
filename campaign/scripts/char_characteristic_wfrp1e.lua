@@ -15,13 +15,13 @@
     Header states:
         WS        no advancement in current Career
         WS [+]    unfinished Career requirement
-        WS ✓      Career requirement satisfied
+        WS check  Career requirement satisfied
 
     Marker color communicates whether the header is actionable now:
-        red [+]     unfinished and purchase/refund is available
-        black [+]   unfinished and no action is available
-        green ✓     complete and transaction refund is available
-        black ✓     complete and no action is available
+        red [+]      unfinished and purchase/refund is available
+        black [+]    unfinished and no action is available
+        green check  complete and transaction refund is available
+        black check  complete and no action is available
 
     Left click buys one advance when permitted.
     Ctrl + Left click refunds one advance bought during the current
@@ -29,6 +29,10 @@
 
     The interaction surface remains limited to the existing 38 x 20
     characteristic header.
+
+    Checkpoint #9F deliberately uses a bitmap for the completion mark.
+    The inherited sheet text font does not reliably provide a Unicode
+    check glyph, so the bitmap avoids missing-glyph square rendering.
 ]]
 
 local sCharacteristic = nil
@@ -42,6 +46,9 @@ local sExperienceSpentPath = nil
 local bHeaderCanPurchase = false
 local bHeaderCanRefund = false
 
+local wCompleteMarker = nil
+
+local COLOR_MARKER_NEUTRAL = "#FF000000"
 local COLOR_ADVANCE_PENDING = "#FFC00000"
 local COLOR_ADVANCE_COMPLETE = "#FF008000"
 
@@ -65,11 +72,35 @@ end
 
 local function configureStateHeaderGeometry()
     -- Preserve the validated 38 px characteristic column.
-    -- The two transparent text controls overlap slightly so the
-    -- abbreviation keeps enough room while the marker is no longer
-    -- squeezed into the old 17 px area.
+    -- Give the characteristic abbreviation 24 px and the smaller
+    -- action marker 14 px. This is especially important for Dex/Int/Fel.
     characteristic_id_with_state.setStaticBounds(0, 0, 24, 20)
-    advance_state_marker.setStaticBounds(18, 0, 20, 20)
+    advance_state_marker.setStaticBounds(24, 0, 14, 20)
+
+    if Interface.isFont("sheettextsmall") then
+        advance_state_marker.setFont("sheettextsmall")
+    end
+end
+
+
+local function createCompleteMarkerWidget()
+    wCompleteMarker =
+        advance_state_marker.addBitmapWidget(
+            "wfrp1e_char_advancement_complete_icon"
+        )
+
+    if not wCompleteMarker then
+        print(
+            "WFRP1E | ERROR: Could not create advancement completion marker widget."
+        )
+
+        return
+    end
+
+    wCompleteMarker.setSize(10, 10)
+    wCompleteMarker.setPosition("center", 0, 0)
+    wCompleteMarker.setEnabled(false)
+    wCompleteMarker.setVisible(false)
 end
 
 
@@ -78,18 +109,41 @@ local function setHeaderWithoutMarker()
     characteristic_id_with_state.setVisible(false)
 
     advance_state_marker.setValue("")
-    advance_state_marker.setColor(nil)
+    advance_state_marker.setColor(COLOR_MARKER_NEUTRAL)
     advance_state_marker.setVisible(false)
+
+    if wCompleteMarker then
+        wCompleteMarker.setVisible(false)
+    end
 end
 
 
-local function setHeaderWithMarker(sMarker, sColor)
+local function setHeaderPending(sColor)
     characteristic_id.setVisible(false)
     characteristic_id_with_state.setVisible(true)
 
-    advance_state_marker.setValue(sMarker)
+    if wCompleteMarker then
+        wCompleteMarker.setVisible(false)
+    end
+
+    advance_state_marker.setValue("[+]")
     advance_state_marker.setColor(sColor)
     advance_state_marker.setVisible(true)
+end
+
+
+local function setHeaderComplete(sColor)
+    characteristic_id.setVisible(false)
+    characteristic_id_with_state.setVisible(true)
+
+    advance_state_marker.setValue("")
+    advance_state_marker.setColor(COLOR_MARKER_NEUTRAL)
+    advance_state_marker.setVisible(true)
+
+    if wCompleteMarker then
+        wCompleteMarker.setColor(sColor)
+        wCompleteMarker.setVisible(true)
+    end
 end
 
 
@@ -241,6 +295,7 @@ function onInit()
     characteristic_id_with_state.setValue(sAbbreviation)
 
     configureStateHeaderGeometry()
+    createCompleteMarkerWidget()
     updateDerivedValues()
 end
 
@@ -424,20 +479,16 @@ function refreshAdvancementHeader()
     if nCareer <= 0 then
         setHeaderWithoutMarker()
     elseif nPurchased >= nCareer then
-        setHeaderWithMarker(
-            Interface.getString(
-                "wfrp1e_char_advancement_complete_marker"
-            ),
+        setHeaderComplete(
             bHeaderCanRefund
                 and COLOR_ADVANCE_COMPLETE
-                or nil
+                or COLOR_MARKER_NEUTRAL
         )
     else
-        setHeaderWithMarker(
-            "[+]",
+        setHeaderPending(
             (bHeaderCanPurchase or bHeaderCanRefund)
                 and COLOR_ADVANCE_PENDING
-                or nil
+                or COLOR_MARKER_NEUTRAL
         )
     end
 
