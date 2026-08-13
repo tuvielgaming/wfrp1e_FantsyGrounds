@@ -96,4 +96,8 @@
         source="campaign/record_career_wfrp1e.xml"
     />
 
+    <includefile
+        source="campaign/record_skill_wfrp1e.xml"
+    />
+
 </root>
