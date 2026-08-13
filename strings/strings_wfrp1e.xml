@@ -17,6 +17,19 @@
     </string>
 
 
+    <string name="library_recordtype_label_skill">
+        Skills
+    </string>
+
+    <string name="library_recordtype_single_skill">
+        Skill
+    </string>
+
+    <string name="library_recordtype_empty_skill">
+        Unnamed Skill
+    </string>
+
+
     <!-- Characteristic profile -->
 
     <string name="wfrp1e_char_profile_title">
@@ -86,6 +99,21 @@
 
     <string name="wfrp1e_career_amount">
         DISPLAY
+    </string>
+
+
+    <!-- Skill -->
+
+    <string name="wfrp1e_skill_rules_id">
+        RULES ID
+    </string>
+
+    <string name="wfrp1e_skill_specialisation">
+        SPECIALISATION
+    </string>
+
+    <string name="wfrp1e_skill_description">
+        DESCRIPTION
     </string>
 
 
