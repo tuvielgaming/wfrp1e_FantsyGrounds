@@ -215,6 +215,7 @@
                 <bounds>15,384,-20,145</bounds>
                 <class>wfrp1e_character_skill</class>
                 <datasource>.skills</datasource>
+                <allowdelete />
             </windowlist>
 
 
