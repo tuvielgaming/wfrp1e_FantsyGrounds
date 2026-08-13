@@ -22,7 +22,36 @@
     Transaction lifetime is owned globally by
     CharacterAdvancementManagerWFRP1E because CoreRPG Character
     sheets use soft-close behavior.
+
+    Experience is shared by every characteristic advancement header.
+    The main sheet therefore owns one pair of Experience DB handlers
+    and refreshes all 14 characteristic headers whenever the ledger
+    changes. This keeps red/black actionability state synchronized.
 ]]
+
+local sExperienceTotalAwardedPath = nil
+local sExperienceSpentPath = nil
+
+
+local function getCharacteristicControls()
+    return {
+        characteristic_m,
+        characteristic_ws,
+        characteristic_bs,
+        characteristic_s,
+        characteristic_t,
+        characteristic_w,
+        characteristic_i,
+        characteristic_a,
+        characteristic_dex,
+        characteristic_ld,
+        characteristic_int,
+        characteristic_cl,
+        characteristic_wp,
+        characteristic_fel
+    }
+end
+
 
 function onInit()
     local nodeChar = getDatabaseNode()
@@ -112,6 +141,25 @@ function onInit()
 end
 
 
+function onClose()
+    if sExperienceTotalAwardedPath then
+        DB.removeHandler(
+            sExperienceTotalAwardedPath,
+            "onUpdate",
+            onExperienceLedgerUpdated
+        )
+    end
+
+    if sExperienceSpentPath then
+        DB.removeHandler(
+            sExperienceSpentPath,
+            "onUpdate",
+            onExperienceLedgerUpdated
+        )
+    end
+end
+
+
 function bindCharacteristic(
     nodeChar,
     control,
@@ -179,6 +227,47 @@ function bindExperience(nodeChar)
         "wfrp1e_experience",
         DB.getPath(nodeExperience)
     )
+
+    sExperienceTotalAwardedPath =
+        DB.getPath(
+            nodeExperience,
+            "totalAwarded"
+        )
+
+    sExperienceSpentPath =
+        DB.getPath(
+            nodeExperience,
+            "spent"
+        )
+
+    DB.addHandler(
+        sExperienceTotalAwardedPath,
+        "onUpdate",
+        onExperienceLedgerUpdated
+    )
+
+    DB.addHandler(
+        sExperienceSpentPath,
+        "onUpdate",
+        onExperienceLedgerUpdated
+    )
+end
+
+
+function onExperienceLedgerUpdated()
+    refreshAllCharacteristicHeaders()
+end
+
+
+function refreshAllCharacteristicHeaders()
+    for _, control in ipairs(getCharacteristicControls()) do
+        if control
+            and control.subwindow
+            and control.subwindow.refreshAdvancementHeader
+        then
+            control.subwindow.refreshAdvancementHeader()
+        end
+    end
 end
 
 
@@ -234,6 +323,8 @@ function purchaseCharacteristicAdvance(
             )
 
     if not tResult.success then
+        refreshAllCharacteristicHeaders()
+
         print(
             "WFRP1E | Advance rejected: "
             .. tostring(sCharacteristic)
@@ -243,6 +334,11 @@ function purchaseCharacteristicAdvance(
 
         return
     end
+
+    -- Refresh after the manager has completed both persistent writes
+    -- and transaction bookkeeping, so marker colors reflect the final
+    -- state rather than an intermediate DB event.
+    refreshAllCharacteristicHeaders()
 
     print(
         "WFRP1E | Advance purchased: "
@@ -273,6 +369,8 @@ function refundCharacteristicAdvance(
             )
 
     if not tResult.success then
+        refreshAllCharacteristicHeaders()
+
         print(
             "WFRP1E | Advance refund rejected: "
             .. tostring(sCharacteristic)
@@ -282,6 +380,8 @@ function refundCharacteristicAdvance(
 
         return
     end
+
+    refreshAllCharacteristicHeaders()
 
     print(
         "WFRP1E | Advance refunded: "
@@ -371,6 +471,8 @@ function onDrop(x, y, draginfo)
 
         return true
     end
+
+    refreshAllCharacteristicHeaders()
 
     local sCareerName =
         DB.getValue(

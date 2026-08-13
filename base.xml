@@ -20,6 +20,13 @@
     />
 
 
+    <!-- WFRP1E graphic resources -->
+
+    <includefile
+        source="graphics/graphics_wfrp1e.xml"
+    />
+
+
     <!-- WFRP1E static/system data -->
 
     <script

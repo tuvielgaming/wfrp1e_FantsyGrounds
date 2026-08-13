@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+
+<root>
+
+    <icon
+        name="wfrp1e_char_advancement_complete_icon"
+        file="graphics/icons/wfrp1e_advancement_check.png"
+    />
+
+</root>
