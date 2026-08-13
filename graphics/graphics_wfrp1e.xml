@@ -2,8 +2,9 @@
 
 <root>
 
-    <icon name="wfrp1e_char_advancement_complete_icon">
-        graphics/icons/wfrp1e_advancement_check.png
-    </icon>
+    <icon
+        name="wfrp1e_char_advancement_complete_icon"
+        file="graphics/icons/wfrp1e_advancement_check.png"
+    />
 
 </root>
