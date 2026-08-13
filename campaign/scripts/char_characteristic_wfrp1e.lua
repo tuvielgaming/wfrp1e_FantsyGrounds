@@ -30,9 +30,9 @@
     The interaction surface remains limited to the existing 38 x 20
     characteristic header.
 
-    The completion mark is a dedicated icon control. It is independent
-    of the text marker and therefore does not rely on Unicode font glyphs
-    or on the visibility of the [+] text control.
+    Header geometry is selected by abbreviation length so one-, two-
+    and three-letter characteristic names remain visually centered as
+    a combined abbreviation + state-marker group.
 ]]
 
 local sCharacteristic = nil
@@ -43,6 +43,9 @@ local sPurchasedPath = nil
 
 local bHeaderCanPurchase = false
 local bHeaderCanRefund = false
+
+local COMPLETE_ICON =
+    "wfrp1e_char_advancement_complete_icon"
 
 local COLOR_MARKER_NEUTRAL = "#FF000000"
 local COLOR_ADVANCE_PENDING = "#FFC00000"
@@ -66,17 +69,91 @@ local function getCharacterNode()
 end
 
 
-local function configureStateHeaderGeometry()
-    -- Preserve the validated 38 px characteristic column.
-    -- The abbreviation gets 22 px, followed by a 2 px visual gap,
-    -- then a compact 14 px action marker. This keeps Dex/Int/Fel
-    -- readable without widening the grid.
-    characteristic_id_with_state.setStaticBounds(0, 0, 22, 20)
-    advance_state_marker.setStaticBounds(24, 0, 14, 20)
+local function configureStateHeaderGeometry(sAbbreviation)
+    -- Preserve the validated 38 px characteristic column while
+    -- centering the combined abbreviation + marker group.
+    --
+    -- One-letter abbreviations need a compact group so the marker does
+    -- not look detached. Two-letter abbreviations use most of the
+    -- column. Three-letter abbreviations get the largest text area.
+
+    local nLength = string.len(sAbbreviation or "")
+
+    local nAbbrevX = 0
+    local nAbbrevWidth = 23
+    local nMarkerX = 23
+    local nMarkerWidth = 15
+
+    if nLength <= 1 then
+        nAbbrevX = 4
+        nAbbrevWidth = 15
+        nMarkerX = 19
+        nMarkerWidth = 15
+    elseif nLength == 2 then
+        nAbbrevX = 1
+        nAbbrevWidth = 19
+        nMarkerX = 20
+        nMarkerWidth = 17
+    end
+
+    characteristic_id_with_state.setStaticBounds(
+        nAbbrevX,
+        0,
+        nAbbrevWidth,
+        20
+    )
+
+    advance_state_marker.setStaticBounds(
+        nMarkerX,
+        0,
+        nMarkerWidth,
+        20
+    )
+
+    local nCheckSize = 10
+    local nCheckX =
+        nMarkerX
+        + math.floor(
+            (nMarkerWidth - nCheckSize) / 2
+        )
+
+    advance_complete_marker.setStaticBounds(
+        nCheckX,
+        5,
+        nCheckSize,
+        nCheckSize
+    )
 
     if Interface.isFont("sheettextsmall") then
         advance_state_marker.setFont("sheettextsmall")
     end
+end
+
+
+local function initializeCompleteMarker()
+    if not Interface.isIcon(COMPLETE_ICON) then
+        print(
+            "WFRP1E | ERROR: Advancement completion icon resource is unavailable: "
+            .. COMPLETE_ICON
+        )
+
+        return
+    end
+
+    -- Set the icon explicitly at runtime even though it is also declared
+    -- in XML. This verifies the resolved icon resource is the one drawn
+    -- by the control rather than relying only on initial XML state.
+    advance_complete_marker.setIcon(
+        COMPLETE_ICON
+    )
+
+    advance_complete_marker.setDrawMode(
+        "fit"
+    )
+
+    advance_complete_marker.setEnabled(
+        false
+    )
 end
 
 
@@ -239,7 +316,11 @@ function onInit()
     characteristic_id.setValue(sAbbreviation)
     characteristic_id_with_state.setValue(sAbbreviation)
 
-    configureStateHeaderGeometry()
+    configureStateHeaderGeometry(
+        sAbbreviation
+    )
+
+    initializeCompleteMarker()
     updateDerivedValues()
 end
 
