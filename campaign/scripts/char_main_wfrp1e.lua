@@ -7,8 +7,9 @@
         characteristic profile
         current Career
         Experience
+        owned Skill acquisitions
 
-    Career records may be dropped onto this window.
+    Career and Skill records may be dropped onto this window.
 
     Advancement interaction:
 
@@ -138,6 +139,10 @@ function onInit()
     bindExperience(
         nodeChar
     )
+
+    bindSkills(
+        nodeChar
+    )
 end
 
 
@@ -251,6 +256,20 @@ function bindExperience(nodeChar)
         "onUpdate",
         onExperienceLedgerUpdated
     )
+end
+
+
+function bindSkills(nodeChar)
+    local nodeSkills =
+        CharacterSkillManagerWFRP1E.ensureSkills(
+            nodeChar
+        )
+
+    if not nodeSkills then
+        print(
+            "WFRP1E | ERROR: Unable to create Character Skills node."
+        )
+    end
 end
 
 
@@ -412,14 +431,30 @@ function onDrop(x, y, draginfo)
     local sClass, sRecord =
         draginfo.getShortcutData()
 
-    if sClass ~= "career" then
-        return
-    end
-
     if not sRecord or sRecord == "" then
         return
     end
 
+    if sClass == "career" then
+        return handleCareerDrop(
+            sClass,
+            sRecord
+        )
+    end
+
+    if sClass == "skill" then
+        return handleSkillDrop(
+            sClass,
+            sRecord
+        )
+    end
+end
+
+
+function handleCareerDrop(
+    sClass,
+    sRecord
+)
     local nodeCareer =
         DB.findNode(
             sRecord
@@ -484,6 +519,95 @@ function onDrop(x, y, draginfo)
     print(
         "WFRP1E | Current Career assigned: "
         .. sCareerName
+    )
+
+    return true
+end
+
+
+function handleSkillDrop(
+    sClass,
+    sRecord
+)
+    local nodeSkill =
+        DB.findNode(
+            sRecord
+        )
+
+    if not nodeSkill then
+        print(
+            "WFRP1E | ERROR: Unable to resolve dropped Skill: "
+            .. tostring(sRecord)
+        )
+
+        return true
+    end
+
+    local nodeChar =
+        getDatabaseNode()
+
+    if not nodeChar then
+        print(
+            "WFRP1E | ERROR: Character sheet has no database node."
+        )
+
+        return true
+    end
+
+    if DB.isReadOnly(nodeChar) then
+        print(
+            "WFRP1E | Skill acquisition rejected: "
+            .. "Character is read-only."
+        )
+
+        return true
+    end
+
+    clearExperienceFocus()
+
+    local nodeOwnedSkill =
+        CharacterSkillManagerWFRP1E.acquireSkill(
+            nodeChar,
+            nodeSkill,
+            sClass,
+            sRecord
+        )
+
+    if not nodeOwnedSkill then
+        print(
+            "WFRP1E | ERROR: Skill acquisition failed."
+        )
+
+        return true
+    end
+
+    local sSkillName =
+        DB.getValue(
+            nodeOwnedSkill,
+            "name",
+            ""
+        )
+
+    local sSpecialisation =
+        DB.getValue(
+            nodeOwnedSkill,
+            "specialisation",
+            ""
+        )
+
+    local sDisplayName = sSkillName
+
+    if sSpecialisation ~= "" then
+        sDisplayName =
+            sDisplayName
+            .. " ("
+            .. sSpecialisation
+            .. ")"
+    end
+
+    print(
+        "WFRP1E | Skill acquired: "
+        .. sDisplayName
     )
 
     return true
