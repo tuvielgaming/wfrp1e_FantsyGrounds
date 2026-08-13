@@ -2,13 +2,6 @@
     WFRP1E
     Generic characteristic profile column
 
-    Each instance is bound to one characteristic database node:
-
-        characteristics.m
-        characteristics.ws
-        characteristics.bs
-        ...
-
     Persistent data:
         initial
         career
@@ -19,25 +12,23 @@
         Current Profile
         inline advancement header state
 
-    Final advancement header states:
-
+    Header states:
         WS        no advancement in current Career
         WS [+]    unfinished Career requirement
         WS ✓      Career requirement satisfied
 
-    The abbreviation remains neutral. Only the state marker is colored.
+    Marker color communicates whether the header is actionable now:
+        red [+]     unfinished and purchase/refund is available
+        black [+]   unfinished and no action is available
+        green ✓     complete and transaction refund is available
+        black ✓     complete and no action is available
 
-    Header interaction:
-        Left click
-            buy one advance when currently permitted
+    Left click buys one advance when permitted.
+    Ctrl + Left click refunds one advance bought during the current
+    edit transaction.
 
-        Ctrl + Left click
-            refund one advance bought during the current edit
-            transaction
-
-    The transparent interaction control is limited to the existing
-    38 x 20 header area. It does not cover characteristic values or
-    the Experience control.
+    The interaction surface remains limited to the existing 38 x 20
+    characteristic header.
 ]]
 
 local sCharacteristic = nil
@@ -45,6 +36,8 @@ local sCharacteristic = nil
 local sInitialPath = nil
 local sCareerPath = nil
 local sPurchasedPath = nil
+local sExperienceTotalAwardedPath = nil
+local sExperienceSpentPath = nil
 
 local bHeaderCanPurchase = false
 local bHeaderCanRefund = false
@@ -54,70 +47,49 @@ local COLOR_ADVANCE_COMPLETE = "#FF008000"
 
 
 local function getCharacterNode()
-    local nodeCharacteristic =
-        getDatabaseNode()
+    local nodeCharacteristic = getDatabaseNode()
 
     if not nodeCharacteristic then
         return nil
     end
 
-    local nodeCharacteristics =
-        DB.getParent(
-            nodeCharacteristic
-        )
+    local nodeCharacteristics = DB.getParent(nodeCharacteristic)
 
     if not nodeCharacteristics then
         return nil
     end
 
-    return DB.getParent(
-        nodeCharacteristics
-    )
+    return DB.getParent(nodeCharacteristics)
+end
+
+
+local function configureStateHeaderGeometry()
+    -- Preserve the validated 38 px characteristic column.
+    -- The two transparent text controls overlap slightly so the
+    -- abbreviation keeps enough room while the marker is no longer
+    -- squeezed into the old 17 px area.
+    characteristic_id_with_state.setStaticBounds(0, 0, 24, 20)
+    advance_state_marker.setStaticBounds(18, 0, 20, 20)
 end
 
 
 local function setHeaderWithoutMarker()
-    characteristic_id.setVisible(
-        true
-    )
+    characteristic_id.setVisible(true)
+    characteristic_id_with_state.setVisible(false)
 
-    characteristic_id_with_state.setVisible(
-        false
-    )
-
-    advance_state_marker.setVisible(
-        false
-    )
-
-    advance_state_marker.setValue(
-        ""
-    )
+    advance_state_marker.setValue("")
+    advance_state_marker.setColor(nil)
+    advance_state_marker.setVisible(false)
 end
 
 
-local function setHeaderWithMarker(
-    sMarker,
-    sColor
-)
-    characteristic_id.setVisible(
-        false
-    )
+local function setHeaderWithMarker(sMarker, sColor)
+    characteristic_id.setVisible(false)
+    characteristic_id_with_state.setVisible(true)
 
-    characteristic_id_with_state.setVisible(
-        true
-    )
-
-    advance_state_marker.setValue(
-        sMarker
-    )
-
-    advance_state_marker.setColor(
-        sColor
-    )
-
-    advance_state_marker.setVisible(
-        true
-    )
+    advance_state_marker.setValue(sMarker)
+    advance_state_marker.setColor(sColor)
+    advance_state_marker.setVisible(true)
 end
 
 
@@ -127,18 +99,11 @@ local function buildAdvancementTooltip(
     nPurchased,
     tState
 )
-    local bReadOnly =
-        DB.isReadOnly(
-            nodeChar
-        )
-
-    if bReadOnly then
+    if DB.isReadOnly(nodeChar) then
         return "Character is read-only."
     end
 
-    local bHasCareerRequirement =
-        nCareer > 0
-
+    local bHasCareerRequirement = nCareer > 0
     local bCareerComplete =
         bHasCareerRequirement
         and nPurchased >= nCareer
@@ -165,8 +130,7 @@ local function buildAdvancementTooltip(
 
     if tState
         and tState.valid
-        and tState.reason
-            == "insufficient-experience"
+        and tState.reason == "insufficient-experience"
     then
         if bHeaderCanRefund then
             return
@@ -188,8 +152,7 @@ local function buildAdvancementTooltip(
     end
 
     if bHeaderCanRefund then
-        return
-            "Ctrl+Left click: Refund transaction advance"
+        return "Ctrl+Left click: Refund transaction advance"
     end
 
     return "Advance unavailable."
@@ -197,8 +160,7 @@ end
 
 
 function onInit()
-    local nodeCharacteristic =
-        getDatabaseNode()
+    local nodeCharacteristic = getDatabaseNode()
 
     if not nodeCharacteristic then
         print(
@@ -208,9 +170,7 @@ function onInit()
         return
     end
 
-    sCharacteristic = DB.getName(
-        nodeCharacteristic
-    )
+    sCharacteristic = DB.getName(nodeCharacteristic)
 
     if not DataCommonWFRP1E.getCharacteristicDefinition(
         sCharacteristic
@@ -223,20 +183,9 @@ function onInit()
         return
     end
 
-    sInitialPath = DB.getPath(
-        nodeCharacteristic,
-        "initial"
-    )
-
-    sCareerPath = DB.getPath(
-        nodeCharacteristic,
-        "career"
-    )
-
-    sPurchasedPath = DB.getPath(
-        nodeCharacteristic,
-        "purchased"
-    )
+    sInitialPath = DB.getPath(nodeCharacteristic, "initial")
+    sCareerPath = DB.getPath(nodeCharacteristic, "career")
+    sPurchasedPath = DB.getPath(nodeCharacteristic, "purchased")
 
     DB.addHandler(
         sInitialPath,
@@ -256,20 +205,42 @@ function onInit()
         onCharacteristicSourceUpdated
     )
 
+    local nodeChar = getCharacterNode()
+
+    if nodeChar then
+        local nodeExperience = DB.getChild(nodeChar, "experience")
+
+        if nodeExperience then
+            sExperienceTotalAwardedPath =
+                DB.getPath(nodeExperience, "totalAwarded")
+
+            sExperienceSpentPath =
+                DB.getPath(nodeExperience, "spent")
+
+            DB.addHandler(
+                sExperienceTotalAwardedPath,
+                "onUpdate",
+                onAdvancementAvailabilityUpdated
+            )
+
+            DB.addHandler(
+                sExperienceSpentPath,
+                "onUpdate",
+                onAdvancementAvailabilityUpdated
+            )
+        end
+    end
+
     local sAbbreviation =
         Interface.getString(
             "wfrp1e_char_abbrev_"
             .. sCharacteristic
         )
 
-    characteristic_id.setValue(
-        sAbbreviation
-    )
+    characteristic_id.setValue(sAbbreviation)
+    characteristic_id_with_state.setValue(sAbbreviation)
 
-    characteristic_id_with_state.setValue(
-        sAbbreviation
-    )
-
+    configureStateHeaderGeometry()
     updateDerivedValues()
 end
 
@@ -298,6 +269,22 @@ function onClose()
             onCharacteristicSourceUpdated
         )
     end
+
+    if sExperienceTotalAwardedPath then
+        DB.removeHandler(
+            sExperienceTotalAwardedPath,
+            "onUpdate",
+            onAdvancementAvailabilityUpdated
+        )
+    end
+
+    if sExperienceSpentPath then
+        DB.removeHandler(
+            sExperienceSpentPath,
+            "onUpdate",
+            onAdvancementAvailabilityUpdated
+        )
+    end
 end
 
 
@@ -306,36 +293,42 @@ function onCharacteristicSourceUpdated()
 end
 
 
+function onAdvancementAvailabilityUpdated()
+    refreshAdvancementHeader()
+end
+
+
 function updateDerivedValues()
     if not sCharacteristic then
         return
     end
 
-    local nodeCharacteristic =
-        getDatabaseNode()
+    local nodeCharacteristic = getDatabaseNode()
 
     if not nodeCharacteristic then
         return
     end
 
-    local nInitial = DB.getValue(
-        nodeCharacteristic,
-        "initial",
-        0
-    )
+    local nInitial =
+        DB.getValue(
+            nodeCharacteristic,
+            "initial",
+            0
+        )
 
-    local nCareer = DB.getValue(
-        nodeCharacteristic,
-        "career",
-        0
-    )
+    local nCareer =
+        DB.getValue(
+            nodeCharacteristic,
+            "career",
+            0
+        )
 
-    local nPurchased = DB.getValue(
-        nodeCharacteristic,
-        "purchased",
-        0
-    )
-
+    local nPurchased =
+        DB.getValue(
+            nodeCharacteristic,
+            "purchased",
+            0
+        )
 
     local nCareerAdvance =
         CharacteristicManagerWFRP1E.calculateCareerAdvance(
@@ -351,7 +344,6 @@ function updateDerivedValues()
         )
     end
 
-
     local nCurrent =
         CharacteristicManagerWFRP1E.calculateCurrent(
             sCharacteristic,
@@ -359,9 +351,7 @@ function updateDerivedValues()
             nPurchased
         )
 
-    current.setValue(
-        nCurrent or 0
-    )
+    current.setValue(nCurrent or 0)
 
     refreshAdvancementHeader()
 end
@@ -372,8 +362,7 @@ function refreshAdvancementHeader()
         return
     end
 
-    local nodeCharacteristic =
-        getDatabaseNode()
+    local nodeCharacteristic = getDatabaseNode()
 
     if not nodeCharacteristic then
         return
@@ -397,6 +386,41 @@ function refreshAdvancementHeader()
             )
         ) or 0
 
+    bHeaderCanPurchase = false
+    bHeaderCanRefund = false
+
+    local nodeChar = getCharacterNode()
+    local tState = nil
+
+    if nodeChar then
+        local bReadOnly = DB.isReadOnly(nodeChar)
+
+        tState =
+            CharacterAdvancementManagerWFRP1E
+                .getCharacteristicAdvanceState(
+                    nodeChar,
+                    sCharacteristic
+                )
+
+        if not bReadOnly
+            and tState
+            and tState.valid
+            and tState.canPurchase
+        then
+            bHeaderCanPurchase = true
+        end
+
+        if not bReadOnly
+            and CharacterAdvancementManagerWFRP1E
+                .hasRefundableCharacteristicAdvance(
+                    nodeChar,
+                    sCharacteristic
+                )
+        then
+            bHeaderCanRefund = true
+        end
+    end
+
     if nCareer <= 0 then
         setHeaderWithoutMarker()
     elseif nPurchased >= nCareer then
@@ -404,71 +428,29 @@ function refreshAdvancementHeader()
             Interface.getString(
                 "wfrp1e_char_advancement_complete_marker"
             ),
-            COLOR_ADVANCE_COMPLETE
+            bHeaderCanRefund
+                and COLOR_ADVANCE_COMPLETE
+                or nil
         )
     else
         setHeaderWithMarker(
             "[+]",
-            COLOR_ADVANCE_PENDING
+            (bHeaderCanPurchase or bHeaderCanRefund)
+                and COLOR_ADVANCE_PENDING
+                or nil
         )
     end
 
-    bHeaderCanPurchase = false
-    bHeaderCanRefund = false
-
-    local nodeChar =
-        getCharacterNode()
-
     if not nodeChar then
-        advance_header_hitbox.setHoverCursor(
-            "arrow"
-        )
-
-        advance_header_hitbox.setTooltipText(
-            ""
-        )
-
+        advance_header_hitbox.setHoverCursor("arrow")
+        advance_header_hitbox.setTooltipText("")
         return
     end
 
-    local bReadOnly =
-        DB.isReadOnly(
-            nodeChar
-        )
-
-    local tState =
-        CharacterAdvancementManagerWFRP1E
-            .getCharacteristicAdvanceState(
-                nodeChar,
-                sCharacteristic
-            )
-
-    if not bReadOnly
-        and tState
-        and tState.valid
-        and tState.canPurchase
-    then
-        bHeaderCanPurchase = true
-    end
-
-    if not bReadOnly
-        and CharacterAdvancementManagerWFRP1E
-            .hasRefundableCharacteristicAdvance(
-                nodeChar,
-                sCharacteristic
-            )
-    then
-        bHeaderCanRefund = true
-    end
-
     if bHeaderCanPurchase or bHeaderCanRefund then
-        advance_header_hitbox.setHoverCursor(
-            "hand"
-        )
+        advance_header_hitbox.setHoverCursor("hand")
     else
-        advance_header_hitbox.setHoverCursor(
-            "arrow"
-        )
+        advance_header_hitbox.setHoverCursor("arrow")
     end
 
     advance_header_hitbox.setTooltipText(
@@ -498,15 +480,10 @@ function handleAdvancementHeaderClick()
         return false
     end
 
-    if not parentcontrol then
-        return false
-    end
-
-    if not parentcontrol.window then
-        return false
-    end
-
-    if not parentcontrol.window.purchaseCharacteristicAdvance then
+    if not parentcontrol
+        or not parentcontrol.window
+        or not parentcontrol.window.purchaseCharacteristicAdvance
+    then
         return false
     end
 
