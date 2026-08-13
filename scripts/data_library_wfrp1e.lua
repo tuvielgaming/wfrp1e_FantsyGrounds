@@ -9,12 +9,18 @@
         career
         reference.careers
 
-    The campaign path contains editable campaign Careers.
-    The reference path is reserved for module/reference Careers later.
+    Skill records use:
+
+        skill
+        reference.skills
+
+    Campaign paths contain editable campaign records.
+    Reference paths are reserved for module/reference records later.
 ]]
 
 function onInit()
     registerCareerRecordType()
+    registerSkillRecordType()
 end
 
 
@@ -37,6 +43,33 @@ function registerCareerRecordType()
     if RecordDataManager.isInitialized() then
         RecordDataManager.initRecordType(
             "career"
+        )
+
+        if DesktopManager.isInitialized() then
+            DesktopManager.rebuildSidebar()
+        end
+    end
+end
+
+
+function registerSkillRecordType()
+    RecordDataManager.setRecordTypeData(
+        "skill",
+        {
+            aDataMap = {
+                "skill",
+                "reference.skills"
+            },
+
+            sSidebarCategory = "create"
+        }
+    )
+
+    -- Keep Skill registration safe under the same late-init case as
+    -- Career registration above.
+    if RecordDataManager.isInitialized() then
+        RecordDataManager.initRecordType(
+            "skill"
         )
 
         if DesktopManager.isInitialized() then

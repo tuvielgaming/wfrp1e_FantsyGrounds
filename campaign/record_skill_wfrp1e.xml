@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+
+<root>
+
+    <!--
+        WFRP1E Skill record
+
+        Checkpoint #10A establishes the persistent Skill data contract only.
+        It does not implement Standard Test automation or skill-specific rules.
+
+        Persistent:
+            name
+            rulesId
+            specialisation
+            description
+
+        rulesId is a stable, language-neutral mechanical identity. It is kept
+        separate from the visible record name so future localization and user
+        renaming cannot break rules lookup.
+
+        One acquired Skill instance may share a rulesId with another instance.
+        Repeated acquisitions are rules-significant for some WFRP 1e Skills,
+        and specialisation is selected per acquired instance where required.
+
+        No generic characteristic, target number, or modifier is stored here;
+        those are not universal properties of WFRP 1e Skills.
+    -->
+
+    <windowclass
+        name="skill"
+        copy="record_window"
+    >
+
+        <placement>
+            <size
+                width="650"
+                height="430"
+            />
+        </placement>
+
+        <sizelimits>
+            <minimum
+                width="650"
+                height="430"
+            />
+        </sizelimits>
+
+    </windowclass>
+
+
+    <windowclass
+        name="skill_header"
+        copy="record_header"
+    />
+
+
+    <windowclass name="skill_main">
+
+        <margins control="0,0,0,2" />
+
+        <sheetdata>
+
+            <label name="rules_id_label">
+                <bounds>10,10,140,20</bounds>
+
+                <static
+                    textres="wfrp1e_skill_rules_id"
+                />
+            </label>
+
+            <basicstring name="rulesId">
+                <bounds>160,8,460,24</bounds>
+            </basicstring>
+
+
+            <label name="specialisation_label">
+                <bounds>10,44,140,20</bounds>
+
+                <static
+                    textres="wfrp1e_skill_specialisation"
+                />
+            </label>
+
+            <basicstring name="specialisation">
+                <bounds>160,42,460,24</bounds>
+            </basicstring>
+
+
+            <label name="description_label">
+                <bounds>10,82,140,20</bounds>
+
+                <static
+                    textres="wfrp1e_skill_description"
+                />
+            </label>
+
+            <basicft name="description">
+                <bounds>10,106,610,250</bounds>
+            </basicft>
+
+        </sheetdata>
+
+    </windowclass>
+
+</root>
