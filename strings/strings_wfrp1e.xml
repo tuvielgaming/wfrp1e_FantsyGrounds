@@ -79,6 +79,20 @@
     </string>
 
 
+    <!-- Character Skills -->
+
+    <string name="wfrp1e_char_skills">
+        SKILLS
+    </string>
+
+    <string name="wfrp1e_char_skill_name">
+        SKILL
+    </string>
+
+    <string name="wfrp1e_char_skill_specialisation">
+        SPECIALISATION
+    </string>
+
 
     <!-- Character Advancement -->
 

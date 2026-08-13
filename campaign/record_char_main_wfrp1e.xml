@@ -181,6 +181,43 @@
             </subwindow>
 
 
+            <!-- SKILLS -->
+
+            <frame_char name="skillsframe">
+                <bounds>0,335,-1,210</bounds>
+            </frame_char>
+
+            <label_frametop name="skills_title">
+                <anchored to="skillsframe" />
+
+                <static
+                    textres="wfrp1e_char_skills"
+                />
+            </label_frametop>
+
+            <label name="skills_name_header">
+                <bounds>43,362,300,18</bounds>
+
+                <static
+                    textres="wfrp1e_char_skill_name"
+                />
+            </label>
+
+            <label name="skills_specialisation_header">
+                <bounds>355,362,300,18</bounds>
+
+                <static
+                    textres="wfrp1e_char_skill_specialisation"
+                />
+            </label>
+
+            <windowlist name="skills_list">
+                <bounds>15,384,-20,145</bounds>
+                <class>wfrp1e_character_skill</class>
+                <datasource>.skills</datasource>
+            </windowlist>
+
+
         </sheetdata>
 
     </windowclass>
@@ -366,6 +403,47 @@
                     end
                 </script>
             </basicnumberc>
+
+        </sheetdata>
+
+    </windowclass>
+
+
+    <!-- CHARACTER SKILL ACQUISITION ROW -->
+
+    <windowclass name="wfrp1e_character_skill">
+
+        <sizelimits>
+            <minimum>
+                <height>26</height>
+            </minimum>
+        </sizelimits>
+
+        <sheetdata>
+
+            <linkfield_record name="link">
+                <bounds>0,2,20,20</bounds>
+            </linkfield_record>
+
+            <stringfield name="name">
+                <bounds>28,0,300,24</bounds>
+
+                <readonly />
+                <nodrag />
+                <nodragselect />
+
+                <font>sheettext</font>
+            </stringfield>
+
+            <stringfield name="specialisation">
+                <bounds>340,0,-1,24</bounds>
+
+                <readonly />
+                <nodrag />
+                <nodragselect />
+
+                <font>sheettext</font>
+            </stringfield>
 
         </sheetdata>
 
