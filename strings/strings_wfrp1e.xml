@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+
+<root>
+
+    <!-- Record types -->
+
+    <string name="library_recordtype_label_career">
+        Careers
+    </string>
+
+    <string name="library_recordtype_single_career">
+        Career
+    </string>
+
+    <string name="library_recordtype_empty_career">
+        Unnamed Career
+    </string>
+
+
+    <!-- Characteristic profile -->
+
+    <string name="wfrp1e_char_profile_title">
+        CHARACTERISTICS
+    </string>
+
+    <string name="wfrp1e_char_profile_initial">
+        STARTER PROFILE
+    </string>
+
+    <string name="wfrp1e_char_profile_advance">
+        ADVANCE SCHEME
+    </string>
+
+    <string name="wfrp1e_char_profile_current">
+        CURRENT PROFILE
+    </string>
+
+
+    <!-- Character Career -->
+
+    <string name="wfrp1e_char_current_career">
+        CURRENT CAREER
+    </string>
+
+    <string name="wfrp1e_char_no_current_career">
+        No current Career
+    </string>
+
+
+    <!-- Character Experience -->
+
+    <string name="wfrp1e_char_experience">
+        EXPERIENCE
+    </string>
+
+    <string name="wfrp1e_char_experience_total">
+        TOTAL AWARDED
+    </string>
+
+    <string name="wfrp1e_char_experience_spent">
+        SPENT
+    </string>
+
+    <string name="wfrp1e_char_experience_available">
+        AVAILABLE
+    </string>
+
+
+
+    <!-- Character Advancement -->
+
+    <string name="wfrp1e_char_advancement_complete_marker">
+        &#10003;
+    </string>
+
+
+    <!-- Career -->
+
+    <string name="wfrp1e_career_advance_scheme">
+        ADVANCE SCHEME
+    </string>
+
+    <string name="wfrp1e_career_steps">
+        STEPS
+    </string>
+
+    <string name="wfrp1e_career_amount">
+        DISPLAY
+    </string>
+
+
+    <!-- Characteristic abbreviations -->
+
+    <string name="wfrp1e_char_abbrev_m">M</string>
+    <string name="wfrp1e_char_abbrev_ws">WS</string>
+    <string name="wfrp1e_char_abbrev_bs">BS</string>
+    <string name="wfrp1e_char_abbrev_s">S</string>
+    <string name="wfrp1e_char_abbrev_t">T</string>
+    <string name="wfrp1e_char_abbrev_w">W</string>
+    <string name="wfrp1e_char_abbrev_i">I</string>
+    <string name="wfrp1e_char_abbrev_a">A</string>
+    <string name="wfrp1e_char_abbrev_dex">Dex</string>
+    <string name="wfrp1e_char_abbrev_ld">Ld</string>
+    <string name="wfrp1e_char_abbrev_int">Int</string>
+    <string name="wfrp1e_char_abbrev_cl">Cl</string>
+    <string name="wfrp1e_char_abbrev_wp">WP</string>
+    <string name="wfrp1e_char_abbrev_fel">Fel</string>
+
+</root>

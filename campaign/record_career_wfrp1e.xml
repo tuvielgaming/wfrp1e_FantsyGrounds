@@ -1,0 +1,228 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+
+<root>
+
+    <!--
+        WFRP1E Career record
+
+        Checkpoint #8B is primarily a persistence/database test.
+
+        The visible STEPS row is diagnostic and will not necessarily
+        remain in the final Career presentation.
+
+        Persistent:
+            advancescheme.<characteristic>.steps
+
+        Derived:
+            formatted +1 / +10 / +2 / +20 etc.
+    -->
+
+    <windowclass
+        name="career"
+        copy="record_window"
+    >
+
+        <placement>
+            <size
+                width="790"
+                height="330"
+            />
+        </placement>
+
+        <sizelimits>
+            <minimum
+                width="760"
+                height="300"
+            />
+
+            <dynamic />
+        </sizelimits>
+
+    </windowclass>
+
+
+    <windowclass
+        name="career_header"
+        copy="record_header"
+    />
+
+
+    <windowclass name="career_main">
+
+        <margins control="0,0,0,2" />
+
+        <script
+            file="campaign/scripts/career_main_wfrp1e.lua"
+        />
+
+        <sheetdata>
+
+            <label name="advance_scheme_title">
+                <bounds>10,5,700,20</bounds>
+
+                <static
+                    textres="wfrp1e_career_advance_scheme"
+                />
+            </label>
+
+
+            <!-- Diagnostic row labels -->
+
+            <label name="steps_label">
+                <bounds>10,58,100,20</bounds>
+
+                <static
+                    textres="wfrp1e_career_steps"
+                />
+            </label>
+
+            <label name="amount_label">
+                <bounds>10,86,100,20</bounds>
+
+                <static
+                    textres="wfrp1e_career_amount"
+                />
+            </label>
+
+
+            <!--
+                14 reusable Advance Scheme columns.
+
+                Starting X: 110
+                Width:      43
+            -->
+
+            <subwindow name="advance_m">
+                <bounds>110,30,43,90</bounds>
+                <noscroll />
+                <activate />
+            </subwindow>
+
+            <subwindow name="advance_ws">
+                <bounds>153,30,43,90</bounds>
+                <noscroll />
+                <activate />
+            </subwindow>
+
+            <subwindow name="advance_bs">
+                <bounds>196,30,43,90</bounds>
+                <noscroll />
+                <activate />
+            </subwindow>
+
+            <subwindow name="advance_s">
+                <bounds>239,30,43,90</bounds>
+                <noscroll />
+                <activate />
+            </subwindow>
+
+            <subwindow name="advance_t">
+                <bounds>282,30,43,90</bounds>
+                <noscroll />
+                <activate />
+            </subwindow>
+
+            <subwindow name="advance_w">
+                <bounds>325,30,43,90</bounds>
+                <noscroll />
+                <activate />
+            </subwindow>
+
+            <subwindow name="advance_i">
+                <bounds>368,30,43,90</bounds>
+                <noscroll />
+                <activate />
+            </subwindow>
+
+            <subwindow name="advance_a">
+                <bounds>411,30,43,90</bounds>
+                <noscroll />
+                <activate />
+            </subwindow>
+
+            <subwindow name="advance_dex">
+                <bounds>454,30,43,90</bounds>
+                <noscroll />
+                <activate />
+            </subwindow>
+
+            <subwindow name="advance_ld">
+                <bounds>497,30,43,90</bounds>
+                <noscroll />
+                <activate />
+            </subwindow>
+
+            <subwindow name="advance_int">
+                <bounds>540,30,43,90</bounds>
+                <noscroll />
+                <activate />
+            </subwindow>
+
+            <subwindow name="advance_cl">
+                <bounds>583,30,43,90</bounds>
+                <noscroll />
+                <activate />
+            </subwindow>
+
+            <subwindow name="advance_wp">
+                <bounds>626,30,43,90</bounds>
+                <noscroll />
+                <activate />
+            </subwindow>
+
+            <subwindow name="advance_fel">
+                <bounds>669,30,43,90</bounds>
+                <noscroll />
+                <activate />
+            </subwindow>
+
+        </sheetdata>
+
+    </windowclass>
+
+
+    <!--
+        One reusable Advance Scheme characteristic column.
+
+            WS
+             2
+            +20
+    -->
+
+    <windowclass name="wfrp1e_career_advance">
+
+        <script
+            file="campaign/scripts/career_advance_wfrp1e.lua"
+        />
+
+        <sheetdata>
+
+            <stringc_noframe_static
+                name="characteristic_id"
+            >
+                <bounds>0,0,43,20</bounds>
+                <center />
+            </stringc_noframe_static>
+
+
+            <basicnumber name="steps">
+                <bounds>3,28,37,24</bounds>
+
+                <script>
+                    function onValueChanged()
+                        window.onStepsValueChanged()
+                    end
+                </script>
+            </basicnumber>
+
+
+            <stringc_noframe_static name="amount">
+                <bounds>0,56,43,24</bounds>
+                <center />
+            </stringc_noframe_static>
+
+        </sheetdata>
+
+    </windowclass>
+
+</root>

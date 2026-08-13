@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+
+<root version="4.8" release="1">
+
+    <description>
+        <text>Warhammer Fantasy Roleplay 1st Edition</text>
+        <author>WFRP1E Ruleset Project</author>
+    </description>
+
+
+    <!-- CoreRPG inheritance -->
+
+    <importruleset source="CoreRPG" />
+
+
+    <!-- WFRP1E string resources -->
+
+    <includefile
+        source="strings/strings_wfrp1e.xml"
+    />
+
+
+    <!-- WFRP1E static/system data -->
+
+    <script
+        name="DataCommonWFRP1E"
+        file="scripts/data_common_wfrp1e.lua"
+    />
+
+    <script
+        name="DataLibraryWFRP1E"
+        file="scripts/data_library_wfrp1e.lua"
+    />
+
+
+    <!-- WFRP1E rules managers -->
+
+    <script
+        name="ExperienceManagerWFRP1E"
+        file="scripts/manager_experience_wfrp1e.lua"
+    />
+
+    <script
+        name="CharacteristicManagerWFRP1E"
+        file="scripts/manager_characteristic_wfrp1e.lua"
+    />
+
+    <script
+        name="CareerManagerWFRP1E"
+        file="scripts/manager_career_wfrp1e.lua"
+    />
+
+    <script
+        name="CareerDBManagerWFRP1E"
+        file="scripts/manager_career_db_wfrp1e.lua"
+    />
+
+    <script
+        name="CharacterCareerManagerWFRP1E"
+        file="scripts/manager_character_career_wfrp1e.lua"
+    />
+
+    <script
+        name="CharacterExperienceManagerWFRP1E"
+        file="scripts/manager_character_experience_wfrp1e.lua"
+    />
+
+    <script
+        name="CharacterAdvancementManagerWFRP1E"
+        file="scripts/manager_character_advancement_wfrp1e.lua"
+    />
+
+
+    <!-- WFRP1E initialization -->
+
+    <script
+        name="WFRP1E"
+        file="scripts/manager_wfrp1e.lua"
+    />
+
+
+    <!-- WFRP1E campaign records -->
+
+    <includefile
+        source="campaign/record_char_main_wfrp1e.xml"
+    />
+
+    <includefile
+        source="campaign/record_career_wfrp1e.xml"
+    />
+
+</root>

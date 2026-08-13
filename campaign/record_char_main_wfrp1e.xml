@@ -1,0 +1,355 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+
+<root>
+
+    <windowclass name="charsheet_main">
+
+        <margins control="0,0,0,2" />
+
+        <script
+            file="campaign/scripts/char_main_wfrp1e.lua"
+        />
+
+        <sheetdata>
+
+            <!-- CHARACTERISTICS -->
+
+            <frame_char name="characteristicsframe">
+                <bounds>0,0,-1,180</bounds>
+            </frame_char>
+
+            <label_frametop name="characteristics_title">
+                <anchored to="characteristicsframe" />
+
+                <static
+                    textres="wfrp1e_char_profile_title"
+                />
+            </label_frametop>
+
+
+            <label name="initial_profile_label">
+                <bounds>15,73,145,20</bounds>
+
+                <static
+                    textres="wfrp1e_char_profile_initial"
+                />
+            </label>
+
+            <label name="advance_scheme_label">
+                <bounds>15,101,145,20</bounds>
+
+                <static
+                    textres="wfrp1e_char_profile_advance"
+                />
+            </label>
+
+            <label name="current_profile_label">
+                <bounds>15,129,145,20</bounds>
+
+                <static
+                    textres="wfrp1e_char_profile_current"
+                />
+            </label>
+
+
+            <!-- Characteristic grid -->
+
+            <subwindow name="characteristic_m">
+                <bounds>165,42,38,115</bounds>
+                <noscroll />
+                <activate />
+            </subwindow>
+
+            <subwindow name="characteristic_ws">
+                <bounds>203,42,38,115</bounds>
+                <noscroll />
+                <activate />
+            </subwindow>
+
+            <subwindow name="characteristic_bs">
+                <bounds>241,42,38,115</bounds>
+                <noscroll />
+                <activate />
+            </subwindow>
+
+            <subwindow name="characteristic_s">
+                <bounds>279,42,38,115</bounds>
+                <noscroll />
+                <activate />
+            </subwindow>
+
+            <subwindow name="characteristic_t">
+                <bounds>317,42,38,115</bounds>
+                <noscroll />
+                <activate />
+            </subwindow>
+
+            <subwindow name="characteristic_w">
+                <bounds>355,42,38,115</bounds>
+                <noscroll />
+                <activate />
+            </subwindow>
+
+            <subwindow name="characteristic_i">
+                <bounds>393,42,38,115</bounds>
+                <noscroll />
+                <activate />
+            </subwindow>
+
+            <subwindow name="characteristic_a">
+                <bounds>431,42,38,115</bounds>
+                <noscroll />
+                <activate />
+            </subwindow>
+
+            <subwindow name="characteristic_dex">
+                <bounds>469,42,38,115</bounds>
+                <noscroll />
+                <activate />
+            </subwindow>
+
+            <subwindow name="characteristic_ld">
+                <bounds>507,42,38,115</bounds>
+                <noscroll />
+                <activate />
+            </subwindow>
+
+            <subwindow name="characteristic_int">
+                <bounds>545,42,38,115</bounds>
+                <noscroll />
+                <activate />
+            </subwindow>
+
+            <subwindow name="characteristic_cl">
+                <bounds>583,42,38,115</bounds>
+                <noscroll />
+                <activate />
+            </subwindow>
+
+            <subwindow name="characteristic_wp">
+                <bounds>621,42,38,115</bounds>
+                <noscroll />
+                <activate />
+            </subwindow>
+
+            <subwindow name="characteristic_fel">
+                <bounds>659,42,38,115</bounds>
+                <noscroll />
+                <activate />
+            </subwindow>
+
+
+            <!-- CURRENT CAREER -->
+
+            <frame_char name="currentcareerframe">
+                <bounds>0,185,-1,55</bounds>
+            </frame_char>
+
+            <label_frametop name="currentcareer_title">
+                <anchored to="currentcareerframe" />
+
+                <static
+                    textres="wfrp1e_char_current_career"
+                />
+            </label_frametop>
+
+            <subwindow name="current_career">
+                <bounds>15,207,-20,25</bounds>
+                <noscroll />
+                <activate />
+            </subwindow>
+
+
+            <!-- EXPERIENCE -->
+
+            <frame_char name="experienceframe">
+                <bounds>0,245,-1,85</bounds>
+            </frame_char>
+
+            <label_frametop name="experience_title">
+                <anchored to="experienceframe" />
+
+                <static
+                    textres="wfrp1e_char_experience"
+                />
+            </label_frametop>
+
+            <subwindow name="experience">
+                <bounds>15,267,-20,55</bounds>
+                <noscroll />
+                <activate />
+            </subwindow>
+
+
+        </sheetdata>
+
+    </windowclass>
+
+
+    <!-- CHARACTERISTIC COLUMN -->
+
+    <windowclass name="wfrp1e_characteristic">
+
+        <script
+            file="campaign/scripts/char_characteristic_wfrp1e.lua"
+        />
+
+        <sheetdata>
+
+            <!--
+                Characteristic header.
+
+                With no current-Career requirement the abbreviation is
+                centered across the full 38 px column.
+
+                When a Career requirement exists, the abbreviation and
+                advancement state marker are separate controls so only
+                the marker is colored.
+            -->
+
+            <stringc_noframe_static name="characteristic_id">
+                <bounds>0,0,38,20</bounds>
+                <center />
+            </stringc_noframe_static>
+
+            <stringc_noframe_static name="characteristic_id_with_state">
+                <bounds>0,0,22,20</bounds>
+                <center />
+                <invisible />
+            </stringc_noframe_static>
+
+            <stringc_noframe_static name="advance_state_marker">
+                <bounds>21,0,17,20</bounds>
+                <center />
+                <invisible />
+            </stringc_noframe_static>
+
+            <!--
+                Transparent, header-only interaction surface.
+
+                It intentionally covers only the existing 38 x 20 header
+                and therefore does not interfere with characteristic or
+                Experience input controls.
+            -->
+
+            <genericcontrol name="advance_header_hitbox">
+                <bounds>0,0,38,20</bounds>
+
+                <script>
+                    function onHover(state)
+                        if state then
+                            window.refreshAdvancementHeader()
+                        end
+                    end
+
+                    function onClickDown(button, x, y)
+                        if button ~= 1 then
+                            return false
+                        end
+
+                        window.refreshAdvancementHeader()
+
+                        return window.isAdvancementHeaderActionable()
+                    end
+
+                    function onClickRelease(button, x, y)
+                        if button ~= 1 then
+                            return false
+                        end
+
+                        return window.handleAdvancementHeaderClick()
+                    end
+                </script>
+            </genericcontrol>
+
+            <basicnumber name="initial">
+                <bounds>1,28,36,24</bounds>
+            </basicnumber>
+
+            <stringc_noframe_static name="career_display">
+                <bounds>0,56,38,24</bounds>
+                <center />
+            </stringc_noframe_static>
+
+            <numberc_static name="current">
+                <bounds>1,84,36,24</bounds>
+            </numberc_static>
+
+        </sheetdata>
+
+    </windowclass>
+
+
+    <!-- CURRENT CAREER -->
+
+    <windowclass name="wfrp1e_current_career">
+
+        <sheetdata>
+
+            <linkfield_record name="link">
+                <bounds>0,2,20,20</bounds>
+            </linkfield_record>
+
+            <stringfield name="name">
+                <bounds>28,0,-1,24</bounds>
+
+                <readonly />
+                <nodrag />
+                <nodragselect />
+
+                <font>sheettext</font>
+
+                <empty>
+                    <textres>wfrp1e_char_no_current_career</textres>
+                </empty>
+            </stringfield>
+
+        </sheetdata>
+
+    </windowclass>
+
+
+    <!--
+        EXPERIENCE
+
+        Only Available Experience is presented to the user.
+
+        The control uses basicnumberc, not basicnumber:
+
+            basicnumber  = database-bound numberfield
+            basicnumberc = unbound numbercontrol
+
+        totalAwarded and spent remain internal persistent ledger data.
+    -->
+
+    <windowclass name="wfrp1e_experience">
+
+        <script
+            file="campaign/scripts/char_experience_wfrp1e.lua"
+        />
+
+        <sheetdata>
+
+            <label name="available_label">
+                <bounds>0,0,120,18</bounds>
+
+                <static
+                    textres="wfrp1e_char_experience_available"
+                />
+            </label>
+
+            <basicnumberc name="available">
+                <bounds>0,23,120,24</bounds>
+
+                <script>
+                    function onValueChanged()
+                        window.onAvailableValueChanged()
+                    end
+                </script>
+            </basicnumberc>
+
+        </sheetdata>
+
+    </windowclass>
+
+</root>
