@@ -98,6 +98,10 @@
     />
 
     <includefile
+        source="campaign/record_char_career_skills_wfrp1e.xml"
+    />
+
+    <includefile
         source="campaign/record_career_wfrp1e.xml"
     />
 

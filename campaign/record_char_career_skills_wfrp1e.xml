@@ -1,0 +1,155 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+
+<root>
+
+    <!--
+        WFRP1E current-Career Skill advancement layer.
+
+        The current Character points at one Skill-offer snapshot through:
+
+            career.current.skillsPath
+
+        Persistent per-offer state:
+
+            name
+            rulesId
+            specialisation
+            chance
+            description
+            purchased
+
+        "chance" remains descriptive metadata from the Career record.
+        It is not used for later-Career purchase eligibility.
+    -->
+
+    <windowclass name="charsheet_main" merge="merge">
+
+        <script
+            file="campaign/scripts/char_career_skills_layer_wfrp1e.lua"
+        />
+
+        <sheetdata>
+
+            <frame_char name="currentcareerskillsframe">
+                <bounds>0,550,-1,190</bounds>
+            </frame_char>
+
+            <label_frametop name="currentcareerskills_title">
+                <anchored to="currentcareerskillsframe" />
+                <static text="CURRENT CAREER SKILLS" />
+            </label_frametop>
+
+            <label name="currentcareerskills_name_header">
+                <bounds>15,577,280,18</bounds>
+                <static text="SKILL" />
+            </label>
+
+            <label name="currentcareerskills_specialisation_header">
+                <bounds>310,577,245,18</bounds>
+                <static text="SPECIALISATION" />
+            </label>
+
+            <label name="currentcareerskills_chance_header">
+                <bounds>570,577,70,18</bounds>
+                <static text="CHANCE %" />
+            </label>
+
+            <label name="currentcareerskills_state_header">
+                <bounds>650,577,40,18</bounds>
+                <center />
+                <static text="BUY" />
+            </label>
+
+            <windowlist name="current_career_skills_list">
+                <bounds>15,599,-20,125</bounds>
+                <class>wfrp1e_current_career_skill</class>
+            </windowlist>
+
+        </sheetdata>
+
+    </windowclass>
+
+
+    <windowclass name="wfrp1e_current_career_skill">
+
+        <script
+            file="campaign/scripts/char_career_skill_wfrp1e.lua"
+        />
+
+        <sizelimits>
+            <minimum>
+                <height>26</height>
+            </minimum>
+        </sizelimits>
+
+        <sheetdata>
+
+            <stringfield name="name">
+                <bounds>0,0,280,24</bounds>
+                <readonly />
+                <nodrag />
+                <nodragselect />
+                <font>sheettext</font>
+            </stringfield>
+
+            <stringfield name="specialisation">
+                <bounds>295,0,245,24</bounds>
+                <readonly />
+                <nodrag />
+                <nodragselect />
+                <font>sheettext</font>
+            </stringfield>
+
+            <basicnumber name="chance">
+                <bounds>555,0,65,24</bounds>
+                <readonly />
+                <hideonvalue>0</hideonvalue>
+            </basicnumber>
+
+            <stringc_noframe_static name="advance_state_marker">
+                <bounds>630,0,40,24</bounds>
+                <center />
+            </stringc_noframe_static>
+
+            <genericcontrol name="advance_complete_marker">
+                <bounds>645,7,10,10</bounds>
+                <icon>wfrp1e_char_advancement_complete_icon</icon>
+                <drawmode>fit</drawmode>
+                <invisible />
+                <disabled />
+            </genericcontrol>
+
+            <genericcontrol name="advance_hitbox">
+                <bounds>625,0,50,24</bounds>
+
+                <script>
+                    function onHover(state)
+                        if state then
+                            window.refreshAdvancementState()
+                        end
+                    end
+
+                    function onClickDown(button, x, y)
+                        if button ~= 1 then
+                            return false
+                        end
+
+                        window.refreshAdvancementState()
+                        return window.isAdvancementActionable()
+                    end
+
+                    function onClickRelease(button, x, y)
+                        if button ~= 1 then
+                            return false
+                        end
+
+                        return window.handleAdvancementClick()
+                    end
+                </script>
+            </genericcontrol>
+
+        </sheetdata>
+
+    </windowclass>
+
+</root>

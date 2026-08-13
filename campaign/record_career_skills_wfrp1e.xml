@@ -47,6 +47,7 @@
                     <field>name</field>
                     <field>rulesId</field>
                     <field>specialisation</field>
+                    <field>description</field>
                 </acceptdrop>
             </windowlist>
 
