@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+
+<root>
+
+    <windowclass name="career" merge="merge">
+        <placement>
+            <size>
+                <height>500</height>
+            </size>
+        </placement>
+        <sizelimits>
+            <minimum>
+                <height>430</height>
+            </minimum>
+        </sizelimits>
+    </windowclass>
+
+    <windowclass name="career_main" merge="merge">
+        <sheetdata>
+
+            <label name="skills_title">
+                <bounds>10,135,700,20</bounds>
+                <static text="SKILLS" />
+            </label>
+
+            <label name="skills_name_header">
+                <bounds>15,163,280,18</bounds>
+                <static text="SKILL" />
+            </label>
+
+            <label name="skills_specialisation_header">
+                <bounds>310,163,250,18</bounds>
+                <static text="SPECIALISATION" />
+            </label>
+
+            <label name="skills_chance_header">
+                <bounds>590,163,90,18</bounds>
+                <static text="CHANCE %" />
+            </label>
+
+            <windowlist name="skills_list">
+                <bounds>10,185,-15,210</bounds>
+                <class>wfrp1e_career_skill</class>
+                <datasource>.skills</datasource>
+                <acceptdrop>
+                    <class>skill</class>
+                    <field>name</field>
+                    <field>rulesId</field>
+                    <field>specialisation</field>
+                </acceptdrop>
+            </windowlist>
+
+        </sheetdata>
+    </windowclass>
+
+    <windowclass name="wfrp1e_career_skill">
+        <sizelimits>
+            <minimum>
+                <height>26</height>
+            </minimum>
+        </sizelimits>
+        <sheetdata>
+
+            <stringfield name="name">
+                <bounds>0,0,280,24</bounds>
+                <readonly />
+                <nodrag />
+                <nodragselect />
+                <font>sheettext</font>
+            </stringfield>
+
+            <stringfield name="specialisation">
+                <bounds>295,0,250,24</bounds>
+                <readonly />
+                <nodrag />
+                <nodragselect />
+                <font>sheettext</font>
+            </stringfield>
+
+            <basicnumber name="chance">
+                <bounds>575,0,70,24</bounds>
+                <hideonvalue>0</hideonvalue>
+            </basicnumber>
+
+        </sheetdata>
+    </windowclass>
+
+</root>

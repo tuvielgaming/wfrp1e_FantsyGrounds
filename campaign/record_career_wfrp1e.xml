@@ -225,4 +225,9 @@
 
     </windowclass>
 
+
+    <includefile
+        source="campaign/record_career_skills_wfrp1e.xml"
+    />
+
 </root>
