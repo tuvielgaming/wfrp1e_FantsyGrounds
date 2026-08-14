@@ -1,6 +1,6 @@
 # WFRP1E Fantasy Grounds — AI Resume Context
 
-Last updated: 2026-08-14 09:56 Europe/Warsaw
+Last updated: 2026-08-14 11:53 Europe/Warsaw
 
 This is the single authoritative resume/checkpoint file for the Fantasy Grounds WFRP 1e project. Update this file in place instead of creating overlapping context documents.
 
@@ -259,7 +259,7 @@ Verified implementation:
 - no situational modifiers
 - no dice roll
 
-Owned Skill tooltip diagnostic now additionally shows:
+Owned Skill tooltip diagnostic additionally shows:
 - `Resolved base targets (no Skill bonus): ...` for locally resolvable potential tests
 - `Context required: ...` for potential tests that need external/situational input
 
@@ -275,7 +275,50 @@ Verified examples:
 - verified head: `05437f824d6a4a0cf1db30405a87e48b6875d821`
 - merged commit: `4b3d1fb0ab75415685c3d173262fb90ce1db6768`
 
-## 9. Verified checkpoint history
+## 9. Plain d100 Standard Test roll (#10I PASS)
+
+Mechanics audited from WFRP 1e Basic Test Procedure:
+- roll D100
+- success when roll is less than or equal to the percentage chance
+- equality is therefore success
+
+Verified implementation:
+- `StandardTestManagerWFRP1E` owns the executable roll lifecycle/result
+- only already-locally-resolved #10H BASE targets can be rolled
+- temporary explicit launch surface: Ctrl+Double-click an owned Skill name
+- launch is offered only when that Skill maps to exactly ONE potential named Standard Test and that test's BASE target resolves locally
+- ambiguous Skills such as Charm do not auto-select Bargain/Bluff/Gossip
+- context-required Skills such as Pick Lock do not roll
+- no Skill modifier is applied yet, including no Pick Pocket repeated-acquisition bonus
+- no situational modifiers, context-dependent formula resolution, margins/degrees, opposed tests or effects
+- result chat reports Character, test ID, roll, target, success/failure, and explicitly says Skill modifiers are not applied
+
+FGU API behavior verified in runtime:
+- custom roll uses documented `Comm.throwDice`
+- result is handled by keyed `onDiceLanded`
+- custom data carries test ID/target/Character name
+- landed dice total supplies the D100 result
+- chat uses documented `Comm.deliverChatMessage`
+- IMPORTANT percentile construction: pass only `{ "d100" }`
+- FGU automatically adds the companion d10 for a percentile roll
+- passing `{ "d100", "d10" }` produced an erroneous extra d10 and was rejected during testing
+- corrected `{ "d100" }` behavior was verified: exactly the normal percentile pair and correct 1–100 result
+
+Verified runtime boundaries:
+- Pick Pocket rolls against BASE Current Dex only
+- a second Pick Pocket acquisition can display #10F +10%, but #10I deliberately does not apply it yet
+- Immunity to Disease uses T × 10 BASE target
+- Pick Lock stays blocked because lock difficulty is context-required
+- Charm stays blocked because its named Standard Test choice is ambiguous
+- rolling does not alter XP, Skills, characteristics or Career data
+
+#10I PR:
+- PR #7 `#10I Plain d100 Standard Test roll`
+- initial test head: `9962c3e39d214a68735f4cafc707c315e67b1fad`
+- corrective percentile head: `51c5e704eb5afa56c5113a5ddeaba37b6e6d07d2`
+- merged commit: `91ff79ec3a70a2ddd80574bae222b6a32b85f5bf`
+
+## 10. Verified checkpoint history
 
 - #1 CoreRPG skeleton — PASS
 - #2 WFRP init — PASS
@@ -294,11 +337,12 @@ Verified examples:
 - #10F repeated-acquisition count foundation — PASS
 - #10G Standard Test data foundation — PASS
 - #10H Standard Test base-target resolver — PASS
+- #10I plain d100 Standard Test roll — PASS
 
 Rejected experiment:
 - #9C.1 full-window focus-overlay attempts — REMOVED; do not retry.
 
-## 10. Rulebook conclusions already audited
+## 11. Rulebook conclusions already audited
 
 Career changes / Skills:
 - English Core Rulebook p. 92, “New Skills”
@@ -315,15 +359,16 @@ Standard Tests:
 - English and Polish Standard Tests sections were audited before #10G
 - named Standard Tests define the tested characteristic/base procedure
 - listed Skills are candidates; GM determines actual applicability
-- appropriate modifiers may stack, subject to rule-specific/mutually-exclusive combinations
-- therefore Standard Test identity/base data and actual Skill applicability/execution remain separate concerns
+- appropriate Skill bonuses may stack, subject to rule-specific/mutually-exclusive combinations
+- Basic Test success is `D100 <= final percentage chance`
+- therefore Standard Test identity/base data, Skill applicability/modification, situational modification and execution remain separate concerns
 
-## 11. Current verified baseline
+## 12. Current verified baseline
 
-Current verified code baseline after #10H merge:
-- `4b3d1fb0ab75415685c3d173262fb90ce1db6768`
+Current verified code baseline after #10I merge:
+- `91ff79ec3a70a2ddd80574bae222b6a32b85f5bf`
 
-This context-document update is metadata only and may make `main` one commit newer; code baseline above is the #10H merge.
+This context-document update is metadata only and may make `main` one commit newer; code baseline above is the #10I merge.
 
 Important current files include:
 - `base.xml`
@@ -345,18 +390,18 @@ Important current files include:
 - `scripts/manager_character_career_wfrp1e.lua`
 - `scripts/manager_character_experience_wfrp1e.lua`
 
-## 12. Next checkpoint
+## 13. Next checkpoint
 
-#10I is NOT frozen yet.
+#10J is NOT frozen yet.
 
-Before implementing any dice action:
-1. inspect official Fantasy Grounds Unity/CoreRPG action and roll APIs or proven CoreRPG patterns;
-2. inspect the read-only Foundry Standard Test execution/result boundary as architecture reference;
-3. choose one small auditable percentile-roll checkpoint using only already-resolved base targets.
+Before applying any Skill modifier to the executable Standard Test roll:
+1. re-audit the relevant WFRP 1e Skill descriptions and Standard Test text for the exact modifier supplied by possession/acquisition of a Skill;
+2. distinguish a Skill's ordinary modifier from repeated-acquisition effects such as Pick Lock/Pick Pocket additional +10%s;
+3. inspect the read-only Foundry Skill-rule resolver for architecture only;
+4. preserve the Core Rulebook rule that listed Skills are only potentially relevant and actual applicability is a GM/player decision.
 
 Preferred next boundary:
-- execute a plain d100 Standard Test against an already-resolved base target
-- report the rolled value, target and success/failure
-- keep Skill selection/modifiers explicit and OUT of scope
-- keep target/noise/lock-difficulty formulas OUT of scope
-- do not yet implement full Standard Test dialog, degrees/margins, opposed tests, effects or broad automation
+- derive the modifier for one explicitly chosen owned Skill against one named Standard Test
+- use the clicked Skill as the explicit applicability choice rather than auto-applying every candidate Skill
+- keep ambiguous test selection, mutually-exclusive Skill combinations, situational modifiers and context-required formulas out of scope until separately audited
+- only after that diagnostic/modifier resolution is verified should the modifier be fed into the actual #10I roll target
