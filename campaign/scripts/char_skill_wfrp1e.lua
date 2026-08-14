@@ -2,12 +2,14 @@
     WFRP1E
     Character-owned Skill row
 
-    This row deliberately derives repeated-acquisition information from the
-    Character's independent owned Skill instances. No acquisition count or
-    rank is persisted on the Skill itself.
+    Repeated-acquisition information is derived from the Character's
+    independent owned Skill instances. No acquisition count or rank is
+    persisted on the Skill itself.
 
-    The tooltip is diagnostic/presentational only. Standard Test automation
-    remains a later checkpoint.
+    Standard Test information shown here is also diagnostic/presentational
+    only. The registry returns potentially relevant named Standard Tests for
+    the Skill's stable rulesId. The Core Rulebook leaves actual applicability
+    to the GM; this script does not apply modifiers or roll tests.
 ]]
 
 local function getCharacterNode()
@@ -60,6 +62,11 @@ function refreshSkillTooltip()
             sRulesId
         )
 
+    local aPotentialTests =
+        DataStandardTestsWFRP1E.getPotentialStandardTestsForSkill(
+            sRulesId
+        )
+
     local aLines = {}
 
     if nAcquisitions > 1
@@ -78,6 +85,17 @@ function refreshSkillTooltip()
             "Repeat acquisition bonus: +"
             .. tostring(nRepeatedModifier)
             .. "%"
+        )
+    end
+
+    if #aPotentialTests > 0 then
+        table.insert(
+            aLines,
+            "Potential Standard Tests: "
+            .. table.concat(
+                aPotentialTests,
+                ", "
+            )
         )
     end
 
