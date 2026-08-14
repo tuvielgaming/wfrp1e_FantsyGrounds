@@ -117,6 +117,10 @@
     />
 
     <includefile
+        source="campaign/record_standard_test_selector_wfrp1e.xml"
+    />
+
+    <includefile
         source="campaign/record_career_wfrp1e.xml"
     />
 

@@ -1,0 +1,225 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+
+<root>
+
+    <!--
+        #10L transient Standard Test selector
+
+        This window is intentionally unbound. It contains no persistent data.
+        The caller supplies one Character node, one explicitly selected owned
+        Skill rulesId, and the named Standard Test candidates already present
+        in the audited Standard Test registry.
+
+        Only tests whose #10K selected-Skill final target resolves locally are
+        presented. Selecting a button calls the already-verified #10K
+        executable roll path; no new mechanics are implemented here.
+
+        The current audited registry never produces more than three locally
+        rollable choices for one owned Skill. Fixed buttons are used here on
+        purpose instead of dynamically created unbound windowlist children;
+        this avoids any database/windowclass side effects in a transient dialog.
+    -->
+
+    <windowclass name="wfrp1e_standard_test_selector">
+
+        <frame>utilitybox</frame>
+
+        <placement>
+            <size>
+                <width>500</width>
+                <height>220</height>
+            </size>
+        </placement>
+
+        <sizelimits>
+            <minimum>
+                <width>500</width>
+                <height>220</height>
+            </minimum>
+            <maximum>
+                <width>500</width>
+                <height>220</height>
+            </maximum>
+        </sizelimits>
+
+        <script>
+            local nodeCharacter = nil
+            local sSelectedSkillRulesId = ""
+            local aChoiceTestIds = {}
+
+            local function signedModifier(nModifier)
+                nModifier = tonumber(nModifier) or 0
+
+                if nModifier >= 0 then
+                    return "+" .. tostring(nModifier)
+                end
+
+                return tostring(nModifier)
+            end
+
+            local function resetChoice(
+                control,
+                nIndex
+            )
+                aChoiceTestIds[nIndex] = nil
+                control.setText("", "", "")
+                control.setVisible(false)
+            end
+
+            local function configureChoice(
+                control,
+                nIndex,
+                sTestId,
+                tTarget
+            )
+                aChoiceTestIds[nIndex] = sTestId
+
+                local sText =
+                    sTestId
+                    .. "  |  "
+                    .. tostring(tTarget.target)
+                    .. "%  (base "
+                    .. tostring(tTarget.baseTarget)
+                    .. "% + Skill "
+                    .. signedModifier(tTarget.skillModifier)
+                    .. "%)"
+
+                control.setText(
+                    sText,
+                    sText,
+                    sText
+                )
+
+                control.setVisible(true)
+            end
+
+            function setContext(
+                nodeChar,
+                sRulesId,
+                aCandidateTestIds
+            )
+                nodeCharacter = nodeChar
+                sSelectedSkillRulesId = tostring(sRulesId or "")
+
+                resetChoice(choice1, 1)
+                resetChoice(choice2, 2)
+                resetChoice(choice3, 3)
+
+                local aControls = {
+                    choice1,
+                    choice2,
+                    choice3
+                }
+
+                local nCreated = 0
+
+                for _, sTestId
+                    in ipairs(aCandidateTestIds or {})
+                do
+                    local tTarget =
+                        StandardTestManagerWFRP1E.resolveSelectedSkillTarget(
+                            nodeCharacter,
+                            sSelectedSkillRulesId,
+                            sTestId
+                        )
+
+                    if tTarget.valid
+                        and nCreated &lt; #aControls
+                    then
+                        nCreated = nCreated + 1
+
+                        configureChoice(
+                            aControls[nCreated],
+                            nCreated,
+                            sTestId,
+                            tTarget
+                        )
+                    end
+                end
+
+                return nCreated
+            end
+
+            function handleChoice(nIndex)
+                local sTestId =
+                    aChoiceTestIds[nIndex]
+
+                if not nodeCharacter
+                    or not sTestId
+                then
+                    return
+                end
+
+                local tResult =
+                    StandardTestManagerWFRP1E.performSelectedSkillTest(
+                        nodeCharacter,
+                        sSelectedSkillRulesId,
+                        sTestId
+                    )
+
+                if tResult
+                    and tResult.launched == true
+                then
+                    close()
+                end
+            end
+        </script>
+
+        <sheetdata>
+
+            <label name="title">
+                <bounds>24,22,-24,22</bounds>
+                <color>#FFFFFF</color>
+                <static text="SELECT STANDARD TEST" />
+            </label>
+
+            <label name="hint">
+                <bounds>24,48,-24,20</bounds>
+                <color>#FFFFFF</color>
+                <static text="Choose the named test for this Skill." />
+            </label>
+
+            <buttoncontrol name="choice1">
+                <bounds>24,82,-24,30</bounds>
+                <font>sheettext</font>
+                <color>#FFFFFF</color>
+                <invisible />
+
+                <script>
+                    function onButtonPress()
+                        window.handleChoice(1)
+                    end
+                </script>
+            </buttoncontrol>
+
+            <buttoncontrol name="choice2">
+                <bounds>24,120,-24,30</bounds>
+                <font>sheettext</font>
+                <color>#FFFFFF</color>
+                <invisible />
+
+                <script>
+                    function onButtonPress()
+                        window.handleChoice(2)
+                    end
+                </script>
+            </buttoncontrol>
+
+            <buttoncontrol name="choice3">
+                <bounds>24,158,-24,30</bounds>
+                <font>sheettext</font>
+                <color>#FFFFFF</color>
+                <invisible />
+
+                <script>
+                    function onButtonPress()
+                        window.handleChoice(3)
+                    end
+                </script>
+            </buttoncontrol>
+
+        </sheetdata>
+
+    </windowclass>
+
+</root>
