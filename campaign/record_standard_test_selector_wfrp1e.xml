@@ -1,0 +1,212 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+
+<root>
+
+    <!--
+        #10L transient Standard Test selector
+
+        This window is intentionally unbound. It contains no persistent data.
+        The caller supplies one Character node, one explicitly selected owned
+        Skill rulesId, and the named Standard Test candidates already present
+        in the audited Standard Test registry.
+
+        Only tests whose #10K selected-Skill final target resolves locally are
+        presented. Selecting a row calls the already-verified #10K executable
+        roll path; no new mechanics are implemented here.
+    -->
+
+    <windowclass name="wfrp1e_standard_test_selector">
+
+        <frame>utilitybox</frame>
+
+        <placement>
+            <size>
+                <width>360</width>
+                <height>190</height>
+            </size>
+        </placement>
+
+        <sizelimits>
+            <minimum>
+                <width>360</width>
+                <height>190</height>
+            </minimum>
+            <maximum>
+                <width>360</width>
+                <height>190</height>
+            </maximum>
+        </sizelimits>
+
+        <script>
+            local nodeCharacter = nil
+            local sSelectedSkillRulesId = ""
+
+            local function signedModifier(nModifier)
+                nModifier = tonumber(nModifier) or 0
+
+                if nModifier >= 0 then
+                    return "+" .. tostring(nModifier)
+                end
+
+                return tostring(nModifier)
+            end
+
+            local function handleTestSelected(sTestId)
+                if not nodeCharacter then
+                    return
+                end
+
+                local tResult =
+                    StandardTestManagerWFRP1E.performSelectedSkillTest(
+                        nodeCharacter,
+                        sSelectedSkillRulesId,
+                        sTestId
+                    )
+
+                if tResult
+                    and tResult.launched == true
+                then
+                    close()
+                end
+            end
+
+            function setContext(
+                nodeChar,
+                sRulesId,
+                aCandidateTestIds
+            )
+                nodeCharacter = nodeChar
+                sSelectedSkillRulesId = tostring(sRulesId or "")
+
+                choices.closeAll()
+
+                local nCreated = 0
+
+                for _, sTestId
+                    in ipairs(aCandidateTestIds or {})
+                do
+                    local tTarget =
+                        StandardTestManagerWFRP1E.resolveSelectedSkillTarget(
+                            nodeCharacter,
+                            sSelectedSkillRulesId,
+                            sTestId
+                        )
+
+                    if tTarget.valid then
+                        local w =
+                            choices.createWindowWithClass(
+                                "wfrp1e_standard_test_choice",
+                                nil
+                            )
+
+                        if w then
+                            w.configure(
+                                sTestId,
+                                tTarget.baseTarget,
+                                tTarget.skillModifier,
+                                tTarget.target,
+                                handleTestSelected
+                            )
+
+                            nCreated = nCreated + 1
+                        end
+                    end
+                end
+
+                return nCreated
+            end
+        </script>
+
+        <sheetdata>
+
+            <label name="title">
+                <bounds>20,20,-20,22</bounds>
+                <static text="SELECT STANDARD TEST" />
+            </label>
+
+            <label name="hint">
+                <bounds>20,45,-20,20</bounds>
+                <static text="Choose the named test for this Skill." />
+            </label>
+
+            <windowlist name="choices">
+                <bounds>20,72,-20,-20</bounds>
+                <noscroll />
+            </windowlist>
+
+        </sheetdata>
+
+    </windowclass>
+
+
+    <windowclass name="wfrp1e_standard_test_choice">
+
+        <sizelimits>
+            <minimum>
+                <height>30</height>
+            </minimum>
+        </sizelimits>
+
+        <script>
+            local sTestId = ""
+            local fSelect = nil
+
+            function configure(
+                sId,
+                nBaseTarget,
+                nSkillModifier,
+                nFinalTarget,
+                fCallback
+            )
+                sTestId = tostring(sId or "")
+                fSelect = fCallback
+
+                local nModifier = tonumber(nSkillModifier) or 0
+                local sModifier = tostring(nModifier)
+
+                if nModifier >= 0 then
+                    sModifier = "+" .. sModifier
+                end
+
+                local sText =
+                    sTestId
+                    .. "  |  "
+                    .. tostring(nFinalTarget)
+                    .. "%  (base "
+                    .. tostring(nBaseTarget)
+                    .. "% + Skill "
+                    .. sModifier
+                    .. "%)"
+
+                select_test.setText(
+                    sText,
+                    sText,
+                    sText
+                )
+            end
+
+            function handleSelect()
+                if fSelect then
+                    fSelect(sTestId)
+                end
+            end
+        </script>
+
+        <sheetdata>
+
+            <buttoncontrol name="select_test">
+                <bounds>0,0,-1,28</bounds>
+                <font>sheettext</font>
+
+                <script>
+                    function onButtonPress()
+                        window.handleSelect()
+                    end
+                </script>
+            </buttoncontrol>
+
+        </sheetdata>
+
+    </windowclass>
+
+</root>
