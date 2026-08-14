@@ -1,6 +1,6 @@
 # WFRP1E Fantasy Grounds — AI Resume Context
 
-Last updated: 2026-08-14 08:04 Europe/Warsaw
+Last updated: 2026-08-14 08:46 Europe/Warsaw
 
 This is the single authoritative resume/checkpoint file for the Fantasy Grounds WFRP 1e project. Update this file in place instead of creating overlapping context documents.
 
@@ -189,7 +189,59 @@ Read-only Foundry reference uses the same architectural principle: group owned S
 - verified head: `069abf237e34620986fd1f06e6f6e6851d6e442e`
 - merged commit: `33a4046cbab961a32d616fd5d91c712eadb501c5`
 
-## 7. Verified checkpoint history
+## 7. Standard Test data foundation (#10G PASS)
+
+Rulebook boundary audited before implementation:
+- named Standard Tests use the same ordinary percentile-test principle, with their base characteristic/formula defined by the Standard Tests table/procedure
+- Skills listed for a Standard Test are potentially relevant, not automatically applicable
+- the GM decides which listed Skills make sense in the actual situation
+- when more than one appropriate Skill applies, their modifiers can be cumulative
+- some Skill combinations are mutually exclusive and still require GM judgement
+
+Verified implementation:
+- `scripts/data_standard_tests_wfrp1e.lua` is descriptive/non-executable data only
+- stable language-neutral named Standard Test IDs
+- each registered definition may expose:
+  - `characteristic` for a direct percentage-characteristic base
+  - `formula` for a formula/situational base requiring later resolution
+  - `skills` as candidate Skill `rulesId` values only
+  - `defaultModifier`
+  - `tags` for runtime requirements/audit metadata
+- procedure-heavy Standard Tests that do not fit this small contract remain intentionally unregistered until dedicated audited execution contracts exist
+- no automatic Skill applicability
+- no formula/target/noise/lock-difficulty evaluation
+- no rolling
+
+Public data helpers currently include:
+- `getNamedStandardTestDefinition(testId)`
+- `getNamedStandardTestIds()`
+- `isPotentialSkillForTest(testId, rulesId)`
+- `getPotentialStandardTestsForSkill(rulesId)`
+
+Owned Skill tooltip now exposes `Potential Standard Tests: ...` by stable test ID as a diagnostic validation surface while preserving #10F acquisition-count/repeat-bonus information.
+
+Verified tooltip examples:
+- `pickLock` => `pickLock`
+- `pickPocket` => `pickPocket`
+- `charm` => `bargain, bluff, gossip`
+- `bribery` => `bribe, gossip, loyalty`
+- `musicianship` => no Potential Standard Tests line in the current registry
+
+Representative stored bases:
+- direct characteristic: `fel`, `dex`, `int`, `cl`, `wp`, etc.
+- `100 - target.wp`
+- `i + cl - target.i`
+- `dex - lockDifficulty`
+- `t * 10`
+- fixed `50`
+- situational `noise`
+
+#10G PR:
+- PR #5 `#10G Standard Test data foundation`
+- verified head: `6f7bd66bafe4bc4950a970c159a0896b00aea47b`
+- merged commit: `adbfba1f306611ec8c9a5a6d009c30116829bc00`
+
+## 8. Verified checkpoint history
 
 - #1 CoreRPG skeleton — PASS
 - #2 WFRP init — PASS
@@ -206,11 +258,12 @@ Read-only Foundry reference uses the same architectural principle: group owned S
 - #10D Career Skill Offer persistence — PASS
 - #10E 100 XP current-Career Skill purchase/refund — PASS
 - #10F repeated-acquisition count foundation — PASS
+- #10G Standard Test data foundation — PASS
 
 Rejected experiment:
 - #9C.1 full-window focus-overlay attempts — REMOVED; do not retry.
 
-## 8. Rulebook conclusions already audited
+## 9. Rulebook conclusions already audited
 
 Career changes / Skills:
 - English Core Rulebook p. 92, “New Skills”
@@ -223,12 +276,19 @@ Repeated acquisition:
 - Pick Lock and Pick Pocket: +10% for each additional acquisition
 - Musicianship / Speak Additional Language / Specialist Weapon use repeated acquisitions to add instruments/languages/weapon categories rather than receiving the same generic numeric rule
 
-## 9. Current verified baseline
+Standard Tests:
+- English and Polish Standard Tests sections were audited before #10G
+- named Standard Tests define the tested characteristic/base procedure
+- listed Skills are candidates; GM determines actual applicability
+- appropriate modifiers may stack, subject to rule-specific/mutually-exclusive combinations
+- therefore Standard Test identity/base data and actual Skill applicability/execution remain separate concerns
 
-Current verified code baseline after #10F merge:
-- `33a4046cbab961a32d616fd5d91c712eadb501c5`
+## 10. Current verified baseline
 
-This context-document update is metadata only and may make `main` one commit newer; code baseline above is the #10F merge.
+Current verified code baseline after #10G merge:
+- `adbfba1f306611ec8c9a5a6d009c30116829bc00`
+
+This context-document update is metadata only and may make `main` one commit newer; code baseline above is the #10G merge.
 
 Important current files include:
 - `base.xml`
@@ -243,20 +303,21 @@ Important current files include:
 - `campaign/scripts/char_skill_wfrp1e.lua`
 - `campaign/scripts/char_career_skill_wfrp1e.lua`
 - `campaign/scripts/char_career_skills_layer_wfrp1e.lua`
+- `scripts/data_standard_tests_wfrp1e.lua`
 - `scripts/manager_character_advancement_wfrp1e.lua`
 - `scripts/manager_character_skill_wfrp1e.lua`
 - `scripts/manager_character_career_wfrp1e.lua`
 - `scripts/manager_character_experience_wfrp1e.lua`
 
-## 10. Next checkpoint
+## 11. Next checkpoint
 
-#10G is NOT frozen yet.
+#10H is NOT frozen yet.
 
-Before implementing it:
-1. inspect the WFRP 1e Standard Tests rules and Skill interactions in the English and Polish rulebooks;
-2. inspect the read-only Foundry Standard Test data/resolver architecture;
-3. choose one small testable foundation checkpoint rather than jumping directly to full Standard Test automation.
+Select one small executable Standard Test foundation checkpoint only after inspecting the existing Fantasy Grounds action/roll APIs or proven CoreRPG patterns needed for it.
 
-Likely direction: create the language-neutral Standard Test identity/data foundation that later Skill resolution can target, while keeping GM applicability decisions explicit and without adding a generic Skill-to-characteristic model.
+Preferred next boundary:
+- resolve a named Standard Test's BASE target number from Character data for the simplest auditable cases
+- keep Skill applicability explicit/not automatic
+- do not yet build the full Standard Test dialog, full candidate-Skill selection, situational target resolution, or broad result/effect automation
 
-Do not implement a full Standard Test roller, automatic universal Skill applicability, or broad rule registry in one step.
+The smallest likely executable subset is direct-characteristic named Standard Tests plus the already-audited self-only `s * 10` / `t * 10` forms, with a diagnostic result surface before introducing actual dice rolling.
