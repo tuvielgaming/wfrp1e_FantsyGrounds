@@ -20,7 +20,30 @@
     The owned Skill is a snapshot. Editing or deleting the source Skill later
     must not rewrite the Character's acquired instance. The source link is
     stored separately for normal Fantasy Grounds record navigation.
+
+    Repeated-acquisition information is derived from the independent owned
+    Skill rows. No persistent rank/count field is maintained.
 ]]
+
+local tRepeatedAcquisitionRules = {
+    pickLock = {
+        valuePerExtraAcquisition = 10
+    },
+
+    pickPocket = {
+        valuePerExtraAcquisition = 10
+    }
+}
+
+
+local function normalizeRulesId(sRulesId)
+    return tostring(
+        sRulesId or ""
+    ):match(
+        "^%s*(.-)%s*$"
+    )
+end
+
 
 function ensureSkills(nodeChar)
     if not nodeChar then
@@ -31,6 +54,96 @@ function ensureSkills(nodeChar)
         nodeChar,
         "skills"
     )
+end
+
+
+function getAcquisitionCount(
+    nodeChar,
+    sRulesId
+)
+    if not nodeChar then
+        return 0
+    end
+
+    local sRequestedRulesId =
+        normalizeRulesId(
+            sRulesId
+        )
+
+    if sRequestedRulesId == "" then
+        return 0
+    end
+
+    local nodeSkills =
+        DB.getChild(
+            nodeChar,
+            "skills"
+        )
+
+    if not nodeSkills then
+        return 0
+    end
+
+    local nCount = 0
+
+    for _, nodeOwnedSkill
+        in pairs(
+            DB.getChildren(
+                nodeSkills
+            )
+        )
+    do
+        local sOwnedRulesId =
+            normalizeRulesId(
+                DB.getValue(
+                    nodeOwnedSkill,
+                    "rulesId",
+                    ""
+                )
+            )
+
+        if sOwnedRulesId == sRequestedRulesId then
+            nCount = nCount + 1
+        end
+    end
+
+    return nCount
+end
+
+
+function getRepeatedAcquisitionModifier(
+    nodeChar,
+    sRulesId
+)
+    local sRequestedRulesId =
+        normalizeRulesId(
+            sRulesId
+        )
+
+    local tRule =
+        tRepeatedAcquisitionRules[
+            sRequestedRulesId
+        ]
+
+    if not tRule then
+        return nil
+    end
+
+    local nAcquisitions =
+        getAcquisitionCount(
+            nodeChar,
+            sRequestedRulesId
+        )
+
+    local nExtraAcquisitions =
+        math.max(
+            nAcquisitions - 1,
+            0
+        )
+
+    return
+        nExtraAcquisitions
+        * tRule.valuePerExtraAcquisition
 end
 
 
