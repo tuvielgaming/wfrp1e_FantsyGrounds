@@ -1,6 +1,6 @@
 # WFRP1E Fantasy Grounds — AI Resume Context
 
-Last updated: 2026-08-14 11:53 Europe/Warsaw
+Last updated: 2026-08-14 14:05 Europe/Warsaw
 
 This is the single authoritative resume/checkpoint file for the Fantasy Grounds WFRP 1e project. Update this file in place instead of creating overlapping context documents.
 
@@ -207,7 +207,7 @@ Verified implementation:
   - `skills` as candidate Skill `rulesId` values only
   - `defaultModifier`
   - `tags` for runtime requirements/audit metadata
-- procedure-heavy Standard Tests that do not fit this small contract remain intentionally unregistered until dedicated audited execution contracts exist
+- procedure-heavy Standard Tests which do not fit this small contract remain intentionally unregistered until dedicated audited execution contracts exist
 - no automatic Skill applicability
 - no formula/target/noise/lock-difficulty evaluation
 - no rolling
@@ -289,9 +289,8 @@ Verified implementation:
 - launch is offered only when that Skill maps to exactly ONE potential named Standard Test and that test's BASE target resolves locally
 - ambiguous Skills such as Charm do not auto-select Bargain/Bluff/Gossip
 - context-required Skills such as Pick Lock do not roll
-- no Skill modifier is applied yet, including no Pick Pocket repeated-acquisition bonus
+- no Skill modifier is applied yet in #10I itself
 - no situational modifiers, context-dependent formula resolution, margins/degrees, opposed tests or effects
-- result chat reports Character, test ID, roll, target, success/failure, and explicitly says Skill modifiers are not applied
 
 FGU API behavior verified in runtime:
 - custom roll uses documented `Comm.throwDice`
@@ -305,8 +304,8 @@ FGU API behavior verified in runtime:
 - corrected `{ "d100" }` behavior was verified: exactly the normal percentile pair and correct 1–100 result
 
 Verified runtime boundaries:
-- Pick Pocket rolls against BASE Current Dex only
-- a second Pick Pocket acquisition can display #10F +10%, but #10I deliberately does not apply it yet
+- Pick Pocket rolls against BASE Current Dex only in the #10I checkpoint
+- a second Pick Pocket acquisition can display #10F +10%, but #10I deliberately does not apply it
 - Immunity to Disease uses T × 10 BASE target
 - Pick Lock stays blocked because lock difficulty is context-required
 - Charm stays blocked because its named Standard Test choice is ambiguous
@@ -318,7 +317,43 @@ Verified runtime boundaries:
 - corrective percentile head: `51c5e704eb5afa56c5113a5ddeaba37b6e6d07d2`
 - merged commit: `91ff79ec3a70a2ddd80574bae222b6a32b85f5bf`
 
-## 10. Verified checkpoint history
+## 10. Selected Skill modifier resolver (#10J PASS)
+
+Source conclusions frozen before implementation:
+- there is NO universal `owned Skill = +10%` rule
+- listed Skills remain only potentially relevant; the clicked/selected owned Skill is the explicit applicability choice for this UI slice
+- Charm gives +10% to Bargain, Bluff and Gossip when applicable
+- Immunity to Disease gives +10% to Disease tests
+- Pick Lock and Pick Pocket gain +10% per ADDITIONAL acquisition; first acquisition contributes +0% through this repeated-acquisition effect
+- Pick Pocket without the Skill has a separate unskilled -30% rule
+- Pick Lock possession gates the attempt; its lock-difficulty formula is still context-required
+- unskilled Pick Pocket and Pick Lock gating are not part of #10J because this diagnostic starts from an owned Skill row
+
+Verified implementation:
+- new `scripts/data_standard_test_skill_effects_wfrp1e.lua`
+- static audited subset of context-free numeric Skill effects only
+- `StandardTestManagerWFRP1E.resolveSelectedSkillModifier(nodeChar, rulesId, testId)`:
+  - validates the selected Skill is a candidate for the named test
+  - resolves context-free fixed modifiers from the audited data
+  - resolves Pick Lock/Pick Pocket repeated-acquisition modifier through the existing #10F acquisition count
+  - does not auto-select/apply other candidate Skills
+- owned Skill tooltip adds `Selected Skill modifiers: ...`
+- #10I executable roll remains BASE-only in the verified #10J checkpoint; diagnostic does not alter target
+- conditional, choice-based, derived, target-side and procedure Skill effects remain unsupported rather than approximated
+
+Verified examples:
+- one `pickPocket` => selected modifier +0%; two => +10%; three => +20%
+- `immunityToDisease` => disease +10%
+- `charm` => bargain +10%, bluff +10%, gossip +10%; still non-rollable because test choice is ambiguous
+- `pickLock` => +0/+10/+20 acquisition diagnostic while test remains context-required
+- #10I percentile rolling and all prior Skill CRUD/diagnostics remain unchanged
+
+#10J PR:
+- PR #8 `#10J Selected Skill modifier resolver`
+- verified head: `d4466fa0860da41b5e6af8b88b3325589bc05d28`
+- merged commit: `7d05f1c5c5b3b54138638cc5fd3231b7a0240c4f`
+
+## 11. Verified checkpoint history
 
 - #1 CoreRPG skeleton — PASS
 - #2 WFRP init — PASS
@@ -338,11 +373,12 @@ Verified runtime boundaries:
 - #10G Standard Test data foundation — PASS
 - #10H Standard Test base-target resolver — PASS
 - #10I plain d100 Standard Test roll — PASS
+- #10J selected Skill modifier resolver — PASS
 
 Rejected experiment:
 - #9C.1 full-window focus-overlay attempts — REMOVED; do not retry.
 
-## 11. Rulebook conclusions already audited
+## 12. Rulebook conclusions already audited
 
 Career changes / Skills:
 - English Core Rulebook p. 92, “New Skills”
@@ -355,20 +391,25 @@ Repeated acquisition:
 - Pick Lock and Pick Pocket: +10% for each additional acquisition
 - Musicianship / Speak Additional Language / Specialist Weapon use repeated acquisitions to add instruments/languages/weapon categories rather than receiving the same generic numeric rule
 
-Standard Tests:
+Standard Tests / Skill effects:
 - English and Polish Standard Tests sections were audited before #10G
 - named Standard Tests define the tested characteristic/base procedure
 - listed Skills are candidates; GM determines actual applicability
 - appropriate Skill bonuses may stack, subject to rule-specific/mutually-exclusive combinations
+- there is no universal owned-Skill +10 rule
+- Charm +10 applies to its audited Fellowship tests when selected/applicable
+- Immunity to Disease +10 applies to Disease
+- Pick Pocket has a separate unskilled -30 path not yet implemented
+- Pick Lock requires possession and still needs lock-difficulty context
 - Basic Test success is `D100 <= final percentage chance`
-- therefore Standard Test identity/base data, Skill applicability/modification, situational modification and execution remain separate concerns
+- Standard Test identity/base data, Skill applicability/modification, situational modification and execution remain separate concerns
 
-## 12. Current verified baseline
+## 13. Current verified baseline
 
-Current verified code baseline after #10I merge:
-- `91ff79ec3a70a2ddd80574bae222b6a32b85f5bf`
+Current verified CODE baseline after #10J merge:
+- `7d05f1c5c5b3b54138638cc5fd3231b7a0240c4f`
 
-This context-document update is metadata only and may make `main` one commit newer; code baseline above is the #10I merge.
+This context-document update is metadata only and makes `main` newer than the verified code merge. Do not treat the metadata commit as a mechanics checkpoint.
 
 Important current files include:
 - `base.xml`
@@ -384,24 +425,84 @@ Important current files include:
 - `campaign/scripts/char_career_skill_wfrp1e.lua`
 - `campaign/scripts/char_career_skills_layer_wfrp1e.lua`
 - `scripts/data_standard_tests_wfrp1e.lua`
+- `scripts/data_standard_test_skill_effects_wfrp1e.lua`
 - `scripts/manager_standard_test_wfrp1e.lua`
 - `scripts/manager_character_advancement_wfrp1e.lua`
 - `scripts/manager_character_skill_wfrp1e.lua`
 - `scripts/manager_character_career_wfrp1e.lua`
 - `scripts/manager_character_experience_wfrp1e.lua`
 
-## 13. Next checkpoint
+## 14. CURRENT UNVERIFIED CHECKPOINT — #10K
 
-#10J is NOT frozen yet.
+#10K title:
+- `#10K Apply selected Skill modifier to Standard Test roll`
 
-Before applying any Skill modifier to the executable Standard Test roll:
-1. re-audit the relevant WFRP 1e Skill descriptions and Standard Test text for the exact modifier supplied by possession/acquisition of a Skill;
-2. distinguish a Skill's ordinary modifier from repeated-acquisition effects such as Pick Lock/Pick Pocket additional +10%s;
-3. inspect the read-only Foundry Skill-rule resolver for architecture only;
-4. preserve the Core Rulebook rule that listed Skills are only potentially relevant and actual applicability is a GM/player decision.
+Status:
+- IMPLEMENTED
+- NOT FGU-VERIFIED
+- DO NOT MERGE until the user explicitly replies `verified`
 
-Preferred next boundary:
-- derive the modifier for one explicitly chosen owned Skill against one named Standard Test
-- use the clicked Skill as the explicit applicability choice rather than auto-applying every candidate Skill
-- keep ambiguous test selection, mutually-exclusive Skill combinations, situational modifiers and context-required formulas out of scope until separately audited
-- only after that diagnostic/modifier resolution is verified should the modifier be fed into the actual #10I roll target
+Test branch:
+- `agent/10k-apply-selected-skill-modifier`
+
+Draft PR:
+- PR #9
+
+Current candidate head:
+- `f3e27b1d91886c936e640fbb2b7e8cfd7180b62d`
+
+Base / last verified code merge:
+- `7d05f1c5c5b3b54138638cc5fd3231b7a0240c4f`
+
+Diff scope:
+- exactly two files versus verified #10J baseline:
+  - `campaign/scripts/char_skill_wfrp1e.lua`
+  - `scripts/manager_standard_test_wfrp1e.lua`
+
+#10K mechanics boundary:
+- clicked owned Skill remains the explicit applicability choice
+- final executable target = locally resolved BASE target + the already-verified #10J selected Skill modifier
+- selected Skill modifier is applied exactly once
+- no automatic candidate Skill selection
+- no clamping rule is introduced
+- no general default/situational modifier stack yet
+- ambiguous test selection remains blocked
+- context-required formulas remain blocked
+- conditional, choice, derived, target-side and procedure Skill effects remain out of scope
+- no unskilled Pick Pocket -30 path yet
+
+Expected examples:
+- Dex 25, one `pickPocket`: base 25 + Skill +0 => target 25
+- Dex 25, two `pickPocket`: base 25 + Skill +10 => target 35
+- Dex 25, three `pickPocket`: base 25 + Skill +20 => target 45
+- deleting one acquisition drops the target by 10 immediately
+- `immunityToDisease` with T 3: base 30 + Skill +10 => target 40
+- Charm remains non-rollable from Skill row because Bargain/Bluff/Gossip selection is ambiguous
+- Pick Lock remains context-required and non-rollable
+
+#10K chat/result intent:
+- selected-Skill roll reports Character, test, Roll, Base, selected Skill modifier, final Target and SUCCESS/FAILURE
+- SUCCESS remains `roll <= final target`
+- percentile construction MUST remain the verified `{ "d100" }` only, allowing FGU to add its companion d10
+- rolling must not mutate Character, XP, Skills or Career data
+
+Fallback:
+- if an unambiguous locally-resolvable Skill has no audited numeric #10J effect, the BASE-only #10I path remains available and explicitly says no audited numeric Skill modifier
+
+FGU test checklist for resuming:
+1. Load branch with no XML/Lua errors.
+2. Dex 25 + one `pickPocket`: tooltip target 25%; Ctrl+Double-click rolls against 25 and chat shows Base 25%, Skill pickPocket +0%, Target 25%.
+3. Add second `pickPocket`: tooltip and actual roll target become 35%; third => 45%.
+4. Delete one duplicate and confirm target falls by 10 immediately.
+5. `immunityToDisease`, T 3: tooltip and actual roll use 40% = 30 +10.
+6. Charm still shows +10 diagnostics but offers no roll.
+7. Pick Lock remains context-required and non-rollable.
+8. Percentile roll still produces exactly the normal FGU two-die percentile pair.
+9. Verify success/failure uses final target and equality succeeds.
+10. Verify rolling changes no persistent Character data.
+
+Resume action:
+- pull/test `agent/10k-apply-selected-skill-modifier`
+- if all checks pass, user replies `verified`
+- then mark PR #9 ready and merge exact verified head only
+- after merge, update this context file before selecting #10L
