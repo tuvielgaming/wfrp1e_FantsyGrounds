@@ -19,6 +19,11 @@
         exactly one named Standard Test and that test's BASE target can be
         resolved locally. The roll still applies NO Skill modifier.
 
+    #10J diagnoses what this explicitly selected owned Skill would contribute
+    to each potential Standard Test when that effect is a context-free fixed
+    modifier or a verified repeated-acquisition modifier. It still does not
+    alter the #10I roll target.
+
     Multiple candidate tests and context-dependent tests are deliberately not
     launched from this row because selecting/resolving them requires explicit
     GM/player input in later checkpoints.
@@ -141,6 +146,57 @@ local function addBaseTargetDiagnostics(
 end
 
 
+local function addSelectedSkillModifierDiagnostics(
+    nodeChar,
+    sRulesId,
+    aPotentialTests,
+    aLines
+)
+    local aResolved = {}
+
+    for _, sTestId in ipairs(aPotentialTests) do
+        local tResult =
+            StandardTestManagerWFRP1E.resolveSelectedSkillModifier(
+                nodeChar,
+                sRulesId,
+                sTestId
+            )
+
+        if tResult.valid then
+            local nModifier =
+                tonumber(
+                    tResult.modifier
+                )
+                or 0
+
+            local sSigned =
+                nModifier >= 0
+                and "+" .. tostring(nModifier)
+                or tostring(nModifier)
+
+            table.insert(
+                aResolved,
+                sTestId
+                .. " "
+                .. sSigned
+                .. "%"
+            )
+        end
+    end
+
+    if #aResolved > 0 then
+        table.insert(
+            aLines,
+            "Selected Skill modifiers: "
+            .. table.concat(
+                aResolved,
+                ", "
+            )
+        )
+    end
+end
+
+
 function refreshSkillTooltip()
     local nodeOwnedSkill = getDatabaseNode()
     local nodeChar = getCharacterNode()
@@ -205,6 +261,13 @@ function refreshSkillTooltip()
 
         addBaseTargetDiagnostics(
             nodeChar,
+            aPotentialTests,
+            aLines
+        )
+
+        addSelectedSkillModifierDiagnostics(
+            nodeChar,
+            sRulesId,
             aPotentialTests,
             aLines
         )
