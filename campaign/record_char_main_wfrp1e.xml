@@ -445,6 +445,14 @@
                             window.refreshSkillTooltip()
                         end
                     end
+
+                    function onDoubleClick(x, y)
+                        if not Input.isControlPressed() then
+                            return false
+                        end
+
+                        return window.handleBaseTestDoubleClick()
+                    end
                 </script>
             </stringfield>
 
