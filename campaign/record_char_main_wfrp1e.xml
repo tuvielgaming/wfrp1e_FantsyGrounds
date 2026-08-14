@@ -414,6 +414,10 @@
 
     <windowclass name="wfrp1e_character_skill">
 
+        <script
+            file="campaign/scripts/char_skill_wfrp1e.lua"
+        />
+
         <sizelimits>
             <minimum>
                 <height>26</height>
@@ -434,6 +438,14 @@
                 <nodragselect />
 
                 <font>sheettext</font>
+
+                <script>
+                    function onHover(state)
+                        if state then
+                            window.refreshSkillTooltip()
+                        end
+                    end
+                </script>
             </stringfield>
 
             <stringfield name="specialisation">
