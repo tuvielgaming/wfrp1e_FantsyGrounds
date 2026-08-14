@@ -87,6 +87,11 @@
         file="scripts/manager_character_skill_wfrp1e.lua"
     />
 
+    <script
+        name="StandardTestManagerWFRP1E"
+        file="scripts/manager_standard_test_wfrp1e.lua"
+    />
+
 
     <!-- WFRP1E initialization -->
 
