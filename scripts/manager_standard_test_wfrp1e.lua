@@ -1,18 +1,26 @@
 --[[
     WFRP1E
-    Standard Test base-target resolver
+    Standard Test manager
 
-    Resolves only the audited base target that can be derived from Character
-    data without situational inputs.
+    #10H resolves only the audited BASE target that can be derived from
+    Character data without situational inputs.
 
-    Deliberate exclusions for this checkpoint:
+    #10I adds one deliberately narrow executable path:
+        - roll a plain D100 against an already-resolved BASE target;
+        - success when roll <= target;
+        - report roll, target and success/failure to chat.
+
+    Deliberate exclusions:
         - no Skill applicability decision
         - no Skill modifier application
+        - no repeated-acquisition modifier application
+        - no situational modifiers
         - no generic formula parser
         - no target/noise/lock-difficulty resolution
-        - no dice rolling
+        - no test-selection dialog
+        - no margins/degrees/opposed tests/effects
 
-    Supported bases:
+    Supported locally resolvable bases:
         characteristic     direct current characteristic value
         s * 10             current Strength multiplied by 10
         t * 10             current Toughness multiplied by 10
@@ -21,13 +29,36 @@
     Context-dependent formulas return a structured context-required result.
 ]]
 
+local ROLL_TYPE = "wfrp1e_standard_test_base"
+
+
+function onInit()
+    Comm.addKeyedEventHandler(
+        "onDiceLanded",
+        ROLL_TYPE,
+        onBaseTestDiceLanded
+    )
+end
+
+
+function onClose()
+    Comm.removeKeyedEventHandler(
+        "onDiceLanded",
+        ROLL_TYPE,
+        onBaseTestDiceLanded
+    )
+end
+
+
 local function failure(sReason, sTestId)
     return {
+        success = false,
         valid = false,
         testId = tostring(sTestId or ""),
         reason = sReason
     }
 end
+
 
 local function getCurrentCharacteristic(nodeChar, sCharacteristic)
     if not nodeChar then
@@ -76,6 +107,7 @@ local function getCurrentCharacteristic(nodeChar, sCharacteristic)
     return nCurrent, nil
 end
 
+
 local function resolvedResult(
     sTestId,
     nBaseTarget,
@@ -84,6 +116,7 @@ local function resolvedResult(
     nDefaultModifier
 )
     return {
+        success = true,
         valid = true,
         testId = sTestId,
         baseTarget = nBaseTarget,
@@ -92,6 +125,7 @@ local function resolvedResult(
         defaultModifier = tonumber(nDefaultModifier) or 0
     }
 end
+
 
 function resolveBaseTarget(nodeChar, sTestId)
     if not nodeChar then
@@ -167,10 +201,138 @@ function resolveBaseTarget(nodeChar, sTestId)
     end
 
     return {
+        success = false,
         valid = false,
         testId = tDefinition.id,
         reason = "context-required",
         formula = tDefinition.formula,
         defaultModifier = tonumber(tDefinition.defaultModifier) or 0
     }
+end
+
+
+local function getCharacterDisplayName(nodeChar)
+    local sName =
+        DB.getValue(
+            nodeChar,
+            "name",
+            ""
+        )
+
+    if sName == "" then
+        return "Character"
+    end
+
+    return sName
+end
+
+
+function performBaseTest(nodeChar, sTestId)
+    local tResolved =
+        resolveBaseTarget(
+            nodeChar,
+            sTestId
+        )
+
+    if not tResolved.valid then
+        return tResolved
+    end
+
+    local tRollData = {
+        testId = tResolved.testId,
+        target = tResolved.baseTarget,
+        characterName = getCharacterDisplayName(nodeChar)
+    }
+
+    Comm.throwDice(
+        ROLL_TYPE,
+        { "d100", "d10" },
+        0,
+        "[WFRP1E BASE TEST] "
+            .. tResolved.testId
+            .. " vs "
+            .. tostring(tResolved.baseTarget)
+            .. "%",
+        tRollData
+    )
+
+    return {
+        success = true,
+        valid = true,
+        launched = true,
+        testId = tResolved.testId,
+        baseTarget = tResolved.baseTarget
+    }
+end
+
+
+function onBaseTestDiceLanded(draginfo)
+    if not draginfo then
+        return
+    end
+
+    local tRollData =
+        draginfo.getCustomData()
+
+    if type(tRollData) ~= "table" then
+        return
+    end
+
+    local nTarget =
+        tonumber(
+            tRollData.target
+        )
+
+    if not nTarget then
+        return
+    end
+
+    local tDiceData =
+        draginfo.getDiceData()
+
+    local nRoll =
+        tDiceData
+        and tonumber(tDiceData.total)
+        or nil
+
+    if not nRoll then
+        return
+    end
+
+    local sTestId =
+        tostring(
+            tRollData.testId
+            or "standardTest"
+        )
+
+    local sCharacterName =
+        tostring(
+            tRollData.characterName
+            or "Character"
+        )
+
+    local bSuccess =
+        nRoll <= nTarget
+
+    local sOutcome =
+        bSuccess
+        and "SUCCESS"
+        or "FAILURE"
+
+    Comm.deliverChatMessage({
+        text =
+            "[WFRP1E BASE TEST] "
+            .. sCharacterName
+            .. " | "
+            .. sTestId
+            .. " | Roll "
+            .. tostring(nRoll)
+            .. " | Target "
+            .. tostring(nTarget)
+            .. "% | "
+            .. sOutcome
+            .. " | Skill modifiers not applied",
+        mode = "system",
+        type = ROLL_TYPE
+    })
 end
