@@ -11,8 +11,17 @@
     Skill's stable rulesId. The Core Rulebook leaves actual Skill applicability
     to the GM.
 
-    #10H additionally exposes resolvable BASE target numbers. These targets do
-    not include any Skill modifier, situational modifier or dice roll.
+    #10H exposes resolvable BASE target numbers. These targets do not include
+    any Skill modifier or situational modifier.
+
+    #10I adds an intentionally narrow roll launcher:
+        Ctrl+Double-click the owned Skill name only when the Skill maps to
+        exactly one named Standard Test and that test's BASE target can be
+        resolved locally. The roll still applies NO Skill modifier.
+
+    Multiple candidate tests and context-dependent tests are deliberately not
+    launched from this row because selecting/resolving them requires explicit
+    GM/player input in later checkpoints.
 ]]
 
 local function getCharacterNode()
@@ -35,6 +44,47 @@ local function getCharacterNode()
         nodeSkills
     )
 end
+
+
+local function getRulesId(nodeOwnedSkill)
+    return
+        DB.getValue(
+            nodeOwnedSkill,
+            "rulesId",
+            ""
+        )
+end
+
+
+local function getUnambiguousBaseTest(
+    nodeChar,
+    sRulesId
+)
+    local aPotentialTests =
+        DataStandardTestsWFRP1E.getPotentialStandardTestsForSkill(
+            sRulesId
+        )
+
+    if #aPotentialTests ~= 1 then
+        return nil, nil
+    end
+
+    local sTestId =
+        aPotentialTests[1]
+
+    local tResolved =
+        StandardTestManagerWFRP1E.resolveBaseTarget(
+            nodeChar,
+            sTestId
+        )
+
+    if not tResolved.valid then
+        return nil, tResolved
+    end
+
+    return sTestId, tResolved
+end
+
 
 local function addBaseTargetDiagnostics(
     nodeChar,
@@ -90,6 +140,7 @@ local function addBaseTargetDiagnostics(
     end
 end
 
+
 function refreshSkillTooltip()
     local nodeOwnedSkill = getDatabaseNode()
     local nodeChar = getCharacterNode()
@@ -100,10 +151,8 @@ function refreshSkillTooltip()
     end
 
     local sRulesId =
-        DB.getValue(
-            nodeOwnedSkill,
-            "rulesId",
-            ""
+        getRulesId(
+            nodeOwnedSkill
         )
 
     local nAcquisitions =
@@ -161,6 +210,23 @@ function refreshSkillTooltip()
         )
     end
 
+    local sRollTestId, tRollTarget =
+        getUnambiguousBaseTest(
+            nodeChar,
+            sRulesId
+        )
+
+    if sRollTestId and tRollTarget then
+        table.insert(
+            aLines,
+            "Ctrl+Double-click: Roll BASE "
+            .. sRollTestId
+            .. " test vs "
+            .. tostring(tRollTarget.baseTarget)
+            .. "% (no Skill bonus)"
+        )
+    end
+
     name.setTooltipText(
         table.concat(
             aLines,
@@ -168,6 +234,49 @@ function refreshSkillTooltip()
         )
     )
 end
+
+
+function handleBaseTestDoubleClick()
+    if not Input.isControlPressed() then
+        return false
+    end
+
+    local nodeOwnedSkill =
+        getDatabaseNode()
+
+    local nodeChar =
+        getCharacterNode()
+
+    if not nodeOwnedSkill or not nodeChar then
+        return false
+    end
+
+    local sRulesId =
+        getRulesId(
+            nodeOwnedSkill
+        )
+
+    local sTestId =
+        getUnambiguousBaseTest(
+            nodeChar,
+            sRulesId
+        )
+
+    if not sTestId then
+        return false
+    end
+
+    local tResult =
+        StandardTestManagerWFRP1E.performBaseTest(
+            nodeChar,
+            sTestId
+        )
+
+    return
+        tResult
+        and tResult.launched == true
+end
+
 
 function onInit()
     refreshSkillTooltip()
