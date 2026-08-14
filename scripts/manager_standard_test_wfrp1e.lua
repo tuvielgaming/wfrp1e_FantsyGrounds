@@ -14,12 +14,19 @@
         - the caller chooses the Skill; no automatic applicability decision;
         - context-free fixed modifiers are read from audited static data;
         - Pick Lock / Pick Pocket repeated-acquisition modifiers reuse the
-          verified Character Skill acquisition-count logic;
-        - the resolved Skill modifier is NOT yet fed into the #10I roll.
+          verified Character Skill acquisition-count logic.
+
+    #10K applies that already-audited selected Skill modifier to the executable
+    target when both the BASE target and selected Skill modifier resolve
+    without additional context:
+
+        final target = base target + selected Skill modifier
+
+    The result is deliberately not clamped. No unverified minimum/maximum
+    percentage rule is introduced here.
 
     Deliberate exclusions:
         - no automatic Skill applicability decision
-        - no Skill modifier application to the executable roll yet
         - no situational modifiers
         - no conditional/choice/derived/target-side Skill effects
         - no generic formula parser
@@ -73,6 +80,17 @@ local function normalizeId(sValue)
     ):match(
         "^%s*(.-)%s*$"
     )
+end
+
+
+local function signedModifier(nModifier)
+    nModifier = tonumber(nModifier) or 0
+
+    if nModifier >= 0 then
+        return "+" .. tostring(nModifier)
+    end
+
+    return tostring(nModifier)
 end
 
 
@@ -360,6 +378,57 @@ function resolveSelectedSkillModifier(
 end
 
 
+function resolveSelectedSkillTarget(
+    nodeChar,
+    sRulesId,
+    sTestId
+)
+    local tBase =
+        resolveBaseTarget(
+            nodeChar,
+            sTestId
+        )
+
+    if not tBase.valid then
+        return tBase
+    end
+
+    local tSkill =
+        resolveSelectedSkillModifier(
+            nodeChar,
+            sRulesId,
+            sTestId
+        )
+
+    if not tSkill.valid then
+        return {
+            success = false,
+            valid = false,
+            testId = tBase.testId,
+            rulesId = normalizeId(sRulesId),
+            baseTarget = tBase.baseTarget,
+            reason = "selected-skill-modifier-unresolved",
+            skillReason = tSkill.reason
+        }
+    end
+
+    local nSkillModifier =
+        tonumber(tSkill.modifier) or 0
+
+    return {
+        success = true,
+        valid = true,
+        testId = tBase.testId,
+        rulesId = tSkill.rulesId,
+        baseTarget = tBase.baseTarget,
+        skillModifier = nSkillModifier,
+        target = tBase.baseTarget + nSkillModifier,
+        effectType = tSkill.effectType,
+        acquisitions = tSkill.acquisitions
+    }
+end
+
+
 local function getCharacterDisplayName(nodeChar)
     local sName =
         DB.getValue(
@@ -413,7 +482,59 @@ function performBaseTest(nodeChar, sTestId)
         valid = true,
         launched = true,
         testId = tResolved.testId,
-        baseTarget = tResolved.baseTarget
+        baseTarget = tResolved.baseTarget,
+        target = tResolved.baseTarget
+    }
+end
+
+
+function performSelectedSkillTest(
+    nodeChar,
+    sRulesId,
+    sTestId
+)
+    local tResolved =
+        resolveSelectedSkillTarget(
+            nodeChar,
+            sRulesId,
+            sTestId
+        )
+
+    if not tResolved.valid then
+        return tResolved
+    end
+
+    local tRollData = {
+        selectedSkill = true,
+        testId = tResolved.testId,
+        skillRulesId = tResolved.rulesId,
+        baseTarget = tResolved.baseTarget,
+        skillModifier = tResolved.skillModifier,
+        target = tResolved.target,
+        characterName = getCharacterDisplayName(nodeChar)
+    }
+
+    Comm.throwDice(
+        ROLL_TYPE,
+        { "d100" },
+        0,
+        "[WFRP1E TEST] "
+            .. tResolved.testId
+            .. " vs "
+            .. tostring(tResolved.target)
+            .. "%",
+        tRollData
+    )
+
+    return {
+        success = true,
+        valid = true,
+        launched = true,
+        testId = tResolved.testId,
+        rulesId = tResolved.rulesId,
+        baseTarget = tResolved.baseTarget,
+        skillModifier = tResolved.skillModifier,
+        target = tResolved.target
     }
 end
 
@@ -470,6 +591,46 @@ function onBaseTestDiceLanded(draginfo)
         bSuccess
         and "SUCCESS"
         or "FAILURE"
+
+    if tRollData.selectedSkill == true then
+        local nBaseTarget =
+            tonumber(tRollData.baseTarget)
+            or nTarget
+
+        local nSkillModifier =
+            tonumber(tRollData.skillModifier)
+            or 0
+
+        local sSkillRulesId =
+            tostring(
+                tRollData.skillRulesId
+                or "skill"
+            )
+
+        Comm.deliverChatMessage({
+            text =
+                "[WFRP1E TEST] "
+                .. sCharacterName
+                .. " | "
+                .. sTestId
+                .. " | Roll "
+                .. tostring(nRoll)
+                .. " | Base "
+                .. tostring(nBaseTarget)
+                .. "% | Skill "
+                .. sSkillRulesId
+                .. " "
+                .. signedModifier(nSkillModifier)
+                .. "% | Target "
+                .. tostring(nTarget)
+                .. "% | "
+                .. sOutcome,
+            mode = "system",
+            type = ROLL_TYPE
+        })
+
+        return
+    end
 
     Comm.deliverChatMessage({
         text =

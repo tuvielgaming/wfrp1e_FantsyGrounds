@@ -11,18 +11,19 @@
     Skill's stable rulesId. The Core Rulebook leaves actual Skill applicability
     to the GM.
 
-    #10H exposes resolvable BASE target numbers. These targets do not include
-    any Skill modifier or situational modifier.
+    #10H exposes resolvable BASE target numbers.
 
     #10I adds an intentionally narrow roll launcher:
         Ctrl+Double-click the owned Skill name only when the Skill maps to
         exactly one named Standard Test and that test's BASE target can be
-        resolved locally. The roll still applies NO Skill modifier.
+        resolved locally.
 
-    #10J diagnoses what this explicitly selected owned Skill would contribute
-    to each potential Standard Test when that effect is a context-free fixed
-    modifier or a verified repeated-acquisition modifier. It still does not
-    alter the #10I roll target.
+    #10J diagnoses what this explicitly selected owned Skill contributes when
+    that effect is a context-free fixed modifier or a verified repeated-
+    acquisition modifier.
+
+    #10K feeds that already-verified selected Skill modifier into the roll
+    target. The clicked owned Skill is the explicit applicability choice.
 
     Multiple candidate tests and context-dependent tests are deliberately not
     launched from this row because selecting/resolving them requires explicit
@@ -58,6 +59,17 @@ local function getRulesId(nodeOwnedSkill)
             "rulesId",
             ""
         )
+end
+
+
+local function signedModifier(nModifier)
+    nModifier = tonumber(nModifier) or 0
+
+    if nModifier >= 0 then
+        return "+" .. tostring(nModifier)
+    end
+
+    return tostring(nModifier)
 end
 
 
@@ -169,16 +181,11 @@ local function addSelectedSkillModifierDiagnostics(
                 )
                 or 0
 
-            local sSigned =
-                nModifier >= 0
-                and "+" .. tostring(nModifier)
-                or tostring(nModifier)
-
             table.insert(
                 aResolved,
                 sTestId
                 .. " "
-                .. sSigned
+                .. signedModifier(nModifier)
                 .. "%"
             )
         end
@@ -273,21 +280,43 @@ function refreshSkillTooltip()
         )
     end
 
-    local sRollTestId, tRollTarget =
+    local sRollTestId, tBaseTarget =
         getUnambiguousBaseTest(
             nodeChar,
             sRulesId
         )
 
-    if sRollTestId and tRollTarget then
-        table.insert(
-            aLines,
-            "Ctrl+Double-click: Roll BASE "
-            .. sRollTestId
-            .. " test vs "
-            .. tostring(tRollTarget.baseTarget)
-            .. "% (no Skill bonus)"
-        )
+    if sRollTestId and tBaseTarget then
+        local tSelectedTarget =
+            StandardTestManagerWFRP1E.resolveSelectedSkillTarget(
+                nodeChar,
+                sRulesId,
+                sRollTestId
+            )
+
+        if tSelectedTarget.valid then
+            table.insert(
+                aLines,
+                "Ctrl+Double-click: Roll "
+                .. sRollTestId
+                .. " test vs "
+                .. tostring(tSelectedTarget.target)
+                .. "% (base "
+                .. tostring(tSelectedTarget.baseTarget)
+                .. "% + Skill "
+                .. signedModifier(tSelectedTarget.skillModifier)
+                .. "%)"
+            )
+        else
+            table.insert(
+                aLines,
+                "Ctrl+Double-click: Roll BASE "
+                .. sRollTestId
+                .. " test vs "
+                .. tostring(tBaseTarget.baseTarget)
+                .. "% (no audited numeric Skill modifier)"
+            )
+        end
     end
 
     name.setTooltipText(
@@ -329,11 +358,29 @@ function handleBaseTestDoubleClick()
         return false
     end
 
-    local tResult =
-        StandardTestManagerWFRP1E.performBaseTest(
+    local tSelectedTarget =
+        StandardTestManagerWFRP1E.resolveSelectedSkillTarget(
             nodeChar,
+            sRulesId,
             sTestId
         )
+
+    local tResult
+
+    if tSelectedTarget.valid then
+        tResult =
+            StandardTestManagerWFRP1E.performSelectedSkillTest(
+                nodeChar,
+                sRulesId,
+                sTestId
+            )
+    else
+        tResult =
+            StandardTestManagerWFRP1E.performBaseTest(
+                nodeChar,
+                sTestId
+            )
+    end
 
     return
         tResult
