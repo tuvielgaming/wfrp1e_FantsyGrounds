@@ -6,10 +6,13 @@
     independent owned Skill instances. No acquisition count or rank is
     persisted on the Skill itself.
 
-    Standard Test information shown here is also diagnostic/presentational
-    only. The registry returns potentially relevant named Standard Tests for
-    the Skill's stable rulesId. The Core Rulebook leaves actual applicability
-    to the GM; this script does not apply modifiers or roll tests.
+    Standard Test information shown here is diagnostic/presentational only.
+    The registry returns potentially relevant named Standard Tests for the
+    Skill's stable rulesId. The Core Rulebook leaves actual Skill applicability
+    to the GM.
+
+    #10H additionally exposes resolvable BASE target numbers. These targets do
+    not include any Skill modifier, situational modifier or dice roll.
 ]]
 
 local function getCharacterNode()
@@ -33,6 +36,59 @@ local function getCharacterNode()
     )
 end
 
+local function addBaseTargetDiagnostics(
+    nodeChar,
+    aPotentialTests,
+    aLines
+)
+    local aResolved = {}
+    local aContextRequired = {}
+
+    for _, sTestId in ipairs(aPotentialTests) do
+        local tResult =
+            StandardTestManagerWFRP1E.resolveBaseTarget(
+                nodeChar,
+                sTestId
+            )
+
+        if tResult.valid then
+            table.insert(
+                aResolved,
+                sTestId
+                .. " "
+                .. tostring(tResult.baseTarget)
+                .. "%"
+            )
+        elseif tResult.reason == "context-required" then
+            table.insert(
+                aContextRequired,
+                sTestId
+            )
+        end
+    end
+
+    if #aResolved > 0 then
+        table.insert(
+            aLines,
+            "Resolved base targets (no Skill bonus): "
+            .. table.concat(
+                aResolved,
+                ", "
+            )
+        )
+    end
+
+    if #aContextRequired > 0 then
+        table.insert(
+            aLines,
+            "Context required: "
+            .. table.concat(
+                aContextRequired,
+                ", "
+            )
+        )
+    end
+end
 
 function refreshSkillTooltip()
     local nodeOwnedSkill = getDatabaseNode()
@@ -97,6 +153,12 @@ function refreshSkillTooltip()
                 ", "
             )
         )
+
+        addBaseTargetDiagnostics(
+            nodeChar,
+            aPotentialTests,
+            aLines
+        )
     end
 
     name.setTooltipText(
@@ -106,7 +168,6 @@ function refreshSkillTooltip()
         )
     )
 end
-
 
 function onInit()
     refreshSkillTooltip()
