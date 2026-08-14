@@ -44,6 +44,11 @@
         file="scripts/data_standard_tests_wfrp1e.lua"
     />
 
+    <script
+        name="DataStandardTestSkillEffectsWFRP1E"
+        file="scripts/data_standard_test_skill_effects_wfrp1e.lua"
+    />
+
 
     <!-- WFRP1E rules managers -->
 
