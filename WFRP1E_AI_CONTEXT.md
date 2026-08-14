@@ -1,6 +1,6 @@
 # WFRP1E Fantasy Grounds — AI Resume Context
 
-Last updated: 2026-08-14 17:14 Europe/Warsaw
+Last updated: 2026-08-14 22:39 Europe/Warsaw
 
 This is the single authoritative resume/checkpoint file for the Fantasy Grounds WFRP 1e project. Update this file in place instead of creating overlapping context documents.
 
@@ -331,7 +331,37 @@ Fallback remains:
 - verified head: `f3e27b1d91886c936e640fbb2b7e8cfd7180b62d`
 - merged commit: `11a1510daa9dd027df9b474020da78ca1fc34f6e`
 
-## 12. Verified checkpoint history
+## 12. Explicit named Standard Test selector (#10L PASS)
+
+Verified behavior:
+- Ctrl+Double-click an owned Skill with exactly one locally rollable named Standard Test keeps the direct #10K roll path
+- Ctrl+Double-click an owned Skill with multiple locally rollable candidate tests opens a transient selector instead of auto-choosing for the GM/player
+- selector shows only candidate tests whose existing `resolveSelectedSkillTarget(...)` resolves locally
+- clicking a selector choice calls the already-verified `performSelectedSkillTest(...)` path and closes the selector
+- selector creates no persistent Character/Skill/XP/Career data
+- Charm with Fel 42 exposes Bargain, Bluff and Gossip at 52% = base 42 + Charm +10 and rolls the explicitly chosen test
+- Pick Pocket remains direct
+- Immunity to Disease remains direct
+- Pick Lock remains context-required and non-rollable
+
+Final selector implementation:
+- `campaign/record_standard_test_selector_wfrp1e.xml`
+- transient unbound top-level window
+- fixed three-button choice surface for the currently audited registry
+- readable white text on the dark utility frame
+- no `StandardTestManagerWFRP1E` mechanics changes in #10L
+
+Rejected/fixed #10L attempts — DO NOT REINTRODUCE:
+1. Dynamic unbound `windowlist` child creation using `createWindowWithClass(...)` produced runtime error `windowlist: Could not find windowclass()` in FGU. This implementation was removed completely.
+2. Initial selector contrast was poor on the dark frame. Final selector explicitly uses white text.
+3. Embedded Lua inside XML used raw `nCreated < #aControls`, causing XML parse failure because `<` is reserved in XML text. Final XML uses `nCreated &lt; #aControls`. When embedding Lua in XML, raw `<` comparisons must be escaped or otherwise avoided.
+
+#10L PR:
+- PR #10 `#10L Explicit Standard Test selector`
+- final verified head: `a7d7e06fe78e711568b7cafc8b6eb1934b77a2f0`
+- merged commit: `260b76785fbb3879c4a8c3daf2ee79475a80b250`
+
+## 13. Verified checkpoint history
 
 - #1 CoreRPG skeleton — PASS
 - #2 WFRP init — PASS
@@ -353,11 +383,12 @@ Fallback remains:
 - #10I plain d100 Standard Test roll — PASS
 - #10J selected Skill modifier resolver — PASS
 - #10K selected Skill modifier applied to roll — PASS
+- #10L explicit named Standard Test selector — PASS
 
 Rejected experiment:
 - #9C.1 full-window focus-overlay attempts — REMOVED; do not retry.
 
-## 13. Rulebook conclusions already audited
+## 14. Rulebook conclusions already audited
 
 Career changes / Skills:
 - English Core Rulebook p. 92, “New Skills”
@@ -383,12 +414,12 @@ Standard Tests / Skill effects:
 - no target clamping rule has been introduced without explicit source verification
 - Standard Test identity/base data, Skill applicability/modification, situational modification and execution remain separate concerns
 
-## 14. Current verified baseline
+## 15. Current verified baseline
 
-Current verified CODE baseline after #10K merge:
-- `11a1510daa9dd027df9b474020da78ca1fc34f6e`
+Current verified CODE baseline after #10L merge:
+- `260b76785fbb3879c4a8c3daf2ee79475a80b250`
 
-This context-document update is metadata only and makes `main` one commit newer than the verified mechanics merge. Do not treat the metadata commit as a mechanics checkpoint.
+This context-document update is metadata only and may make `main` one commit newer than the verified mechanics merge. Do not treat the metadata commit as a mechanics checkpoint.
 
 Important current files include:
 - `base.xml`
@@ -397,6 +428,7 @@ Important current files include:
 - `campaign/record_career_wfrp1e.xml`
 - `campaign/record_career_skills_wfrp1e.xml`
 - `campaign/record_skill_wfrp1e.xml`
+- `campaign/record_standard_test_selector_wfrp1e.xml`
 - `campaign/scripts/char_main_wfrp1e.lua`
 - `campaign/scripts/char_characteristic_wfrp1e.lua`
 - `campaign/scripts/char_experience_wfrp1e.lua`
@@ -411,9 +443,9 @@ Important current files include:
 - `scripts/manager_character_career_wfrp1e.lua`
 - `scripts/manager_character_experience_wfrp1e.lua`
 
-## 15. Next checkpoint
+## 16. Next checkpoint
 
-#10L is NOT frozen yet.
+#10M is NOT frozen yet.
 
 Before implementation:
 1. re-audit the next rule slice in the WFRP 1e Core Rulebook;
@@ -422,7 +454,7 @@ Before implementation:
 4. preserve the explicit GM/player applicability boundary and one-checkpoint workflow.
 
 Candidate next boundaries to evaluate source-first:
-- explicit named Standard Test selection for Skills with multiple candidates (for example Charm -> Bargain/Bluff/Gossip), or
-- one narrowly scoped context/default modifier path if that is a smaller dependency.
+- one narrowly scoped Standard Test situational/default modifier path, or
+- one context-required base formula with explicit input (for example Pick Lock lock difficulty) if it is the smaller prerequisite.
 
-Do not implement full Standard Test dialog, opposed tests, margins/degrees, broad situational automation or procedure-heavy Skills until their individual mechanics and FGU interaction contracts are audited.
+Do not jump to a full Standard Test dialog, opposed tests, margins/degrees, broad situational automation or procedure-heavy Skills until their individual mechanics and FGU interaction contracts are audited.
