@@ -1,6 +1,6 @@
 # WFRP1E Fantasy Grounds — AI Resume Context
 
-Last updated: 2026-08-14 08:46 Europe/Warsaw
+Last updated: 2026-08-14 09:56 Europe/Warsaw
 
 This is the single authoritative resume/checkpoint file for the Fantasy Grounds WFRP 1e project. Update this file in place instead of creating overlapping context documents.
 
@@ -218,7 +218,7 @@ Public data helpers currently include:
 - `isPotentialSkillForTest(testId, rulesId)`
 - `getPotentialStandardTestsForSkill(rulesId)`
 
-Owned Skill tooltip now exposes `Potential Standard Tests: ...` by stable test ID as a diagnostic validation surface while preserving #10F acquisition-count/repeat-bonus information.
+Owned Skill tooltip exposes `Potential Standard Tests: ...` by stable test ID as a diagnostic validation surface while preserving #10F acquisition-count/repeat-bonus information.
 
 Verified tooltip examples:
 - `pickLock` => `pickLock`
@@ -241,7 +241,41 @@ Representative stored bases:
 - verified head: `6f7bd66bafe4bc4950a970c159a0896b00aea47b`
 - merged commit: `adbfba1f306611ec8c9a5a6d009c30116829bc00`
 
-## 8. Verified checkpoint history
+## 8. Standard Test base-target resolver (#10H PASS)
+
+Verified implementation:
+- `scripts/manager_standard_test_wfrp1e.lua`
+- resolves only a named Standard Test BASE target that can be derived from Character data without situational inputs
+- reuses `CharacteristicManagerWFRP1E.calculateCurrent(...)`; does not create a second Current calculation path
+- direct-characteristic tests resolve to that Character's Current characteristic
+- audited non-percentage self-only bases resolve as:
+  - `s * 10` => Current S × 10
+  - `t * 10` => Current T × 10
+- fixed `50` resolves directly to 50
+- context-dependent formulas such as `100 - target.wp`, `i + cl - target.i`, `dex - lockDifficulty`, and `noise` explicitly return `context-required`
+- no generic formula parser
+- no Skill applicability decision
+- no Skill modifiers
+- no situational modifiers
+- no dice roll
+
+Owned Skill tooltip diagnostic now additionally shows:
+- `Resolved base targets (no Skill bonus): ...` for locally resolvable potential tests
+- `Context required: ...` for potential tests that need external/situational input
+
+Verified examples:
+- `charm` with Current Fel 42 => bargain 42%, bluff 42%, gossip 42%
+- `pickPocket` => Current Dex
+- `immunityToDisease` with Current T 4 => disease 40%
+- `pickLock` => context-required rather than guessing lock difficulty
+- `bribery` => bribe context-required while gossip/loyalty resolve from Current Fel/Ld
+
+#10H PR:
+- PR #6 `#10H Standard Test base-target resolver`
+- verified head: `05437f824d6a4a0cf1db30405a87e48b6875d821`
+- merged commit: `4b3d1fb0ab75415685c3d173262fb90ce1db6768`
+
+## 9. Verified checkpoint history
 
 - #1 CoreRPG skeleton — PASS
 - #2 WFRP init — PASS
@@ -259,11 +293,12 @@ Representative stored bases:
 - #10E 100 XP current-Career Skill purchase/refund — PASS
 - #10F repeated-acquisition count foundation — PASS
 - #10G Standard Test data foundation — PASS
+- #10H Standard Test base-target resolver — PASS
 
 Rejected experiment:
 - #9C.1 full-window focus-overlay attempts — REMOVED; do not retry.
 
-## 9. Rulebook conclusions already audited
+## 10. Rulebook conclusions already audited
 
 Career changes / Skills:
 - English Core Rulebook p. 92, “New Skills”
@@ -283,12 +318,12 @@ Standard Tests:
 - appropriate modifiers may stack, subject to rule-specific/mutually-exclusive combinations
 - therefore Standard Test identity/base data and actual Skill applicability/execution remain separate concerns
 
-## 10. Current verified baseline
+## 11. Current verified baseline
 
-Current verified code baseline after #10G merge:
-- `adbfba1f306611ec8c9a5a6d009c30116829bc00`
+Current verified code baseline after #10H merge:
+- `4b3d1fb0ab75415685c3d173262fb90ce1db6768`
 
-This context-document update is metadata only and may make `main` one commit newer; code baseline above is the #10G merge.
+This context-document update is metadata only and may make `main` one commit newer; code baseline above is the #10H merge.
 
 Important current files include:
 - `base.xml`
@@ -304,20 +339,24 @@ Important current files include:
 - `campaign/scripts/char_career_skill_wfrp1e.lua`
 - `campaign/scripts/char_career_skills_layer_wfrp1e.lua`
 - `scripts/data_standard_tests_wfrp1e.lua`
+- `scripts/manager_standard_test_wfrp1e.lua`
 - `scripts/manager_character_advancement_wfrp1e.lua`
 - `scripts/manager_character_skill_wfrp1e.lua`
 - `scripts/manager_character_career_wfrp1e.lua`
 - `scripts/manager_character_experience_wfrp1e.lua`
 
-## 11. Next checkpoint
+## 12. Next checkpoint
 
-#10H is NOT frozen yet.
+#10I is NOT frozen yet.
 
-Select one small executable Standard Test foundation checkpoint only after inspecting the existing Fantasy Grounds action/roll APIs or proven CoreRPG patterns needed for it.
+Before implementing any dice action:
+1. inspect official Fantasy Grounds Unity/CoreRPG action and roll APIs or proven CoreRPG patterns;
+2. inspect the read-only Foundry Standard Test execution/result boundary as architecture reference;
+3. choose one small auditable percentile-roll checkpoint using only already-resolved base targets.
 
 Preferred next boundary:
-- resolve a named Standard Test's BASE target number from Character data for the simplest auditable cases
-- keep Skill applicability explicit/not automatic
-- do not yet build the full Standard Test dialog, full candidate-Skill selection, situational target resolution, or broad result/effect automation
-
-The smallest likely executable subset is direct-characteristic named Standard Tests plus the already-audited self-only `s * 10` / `t * 10` forms, with a diagnostic result surface before introducing actual dice rolling.
+- execute a plain d100 Standard Test against an already-resolved base target
+- report the rolled value, target and success/failure
+- keep Skill selection/modifiers explicit and OUT of scope
+- keep target/noise/lock-difficulty formulas OUT of scope
+- do not yet implement full Standard Test dialog, degrees/margins, opposed tests, effects or broad automation
