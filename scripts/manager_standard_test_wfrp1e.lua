@@ -10,11 +10,18 @@
         - success when roll <= target;
         - report roll, target and success/failure to chat.
 
+    #10J adds diagnostic resolution for one explicitly selected owned Skill:
+        - the caller chooses the Skill; no automatic applicability decision;
+        - context-free fixed modifiers are read from audited static data;
+        - Pick Lock / Pick Pocket repeated-acquisition modifiers reuse the
+          verified Character Skill acquisition-count logic;
+        - the resolved Skill modifier is NOT yet fed into the #10I roll.
+
     Deliberate exclusions:
-        - no Skill applicability decision
-        - no Skill modifier application
-        - no repeated-acquisition modifier application
+        - no automatic Skill applicability decision
+        - no Skill modifier application to the executable roll yet
         - no situational modifiers
+        - no conditional/choice/derived/target-side Skill effects
         - no generic formula parser
         - no target/noise/lock-difficulty resolution
         - no test-selection dialog
@@ -57,6 +64,15 @@ local function failure(sReason, sTestId)
         testId = tostring(sTestId or ""),
         reason = sReason
     }
+end
+
+
+local function normalizeId(sValue)
+    return tostring(
+        sValue or ""
+    ):match(
+        "^%s*(.-)%s*$"
+    )
 end
 
 
@@ -207,6 +223,139 @@ function resolveBaseTarget(nodeChar, sTestId)
         reason = "context-required",
         formula = tDefinition.formula,
         defaultModifier = tonumber(tDefinition.defaultModifier) or 0
+    }
+end
+
+
+function resolveSelectedSkillModifier(
+    nodeChar,
+    sRulesId,
+    sTestId
+)
+    if not nodeChar then
+        return {
+            success = false,
+            valid = false,
+            reason = "no-character"
+        }
+    end
+
+    local sSkill =
+        normalizeId(
+            sRulesId
+        )
+
+    local sTest =
+        normalizeId(
+            sTestId
+        )
+
+    if sSkill == "" then
+        return {
+            success = false,
+            valid = false,
+            reason = "missing-skill-rules-id"
+        }
+    end
+
+    if sTest == "" then
+        return {
+            success = false,
+            valid = false,
+            reason = "missing-test-id"
+        }
+    end
+
+    if not DataStandardTestsWFRP1E.isPotentialSkillForTest(
+        sTest,
+        sSkill
+    ) then
+        return {
+            success = false,
+            valid = false,
+            rulesId = sSkill,
+            testId = sTest,
+            reason = "skill-not-candidate"
+        }
+    end
+
+    local tEffect =
+        DataStandardTestSkillEffectsWFRP1E.getEffect(
+            sSkill,
+            sTest
+        )
+
+    if not tEffect then
+        return {
+            success = false,
+            valid = false,
+            rulesId = sSkill,
+            testId = sTest,
+            reason = "no-audited-numeric-effect"
+        }
+    end
+
+    if tEffect.type == "fixed" then
+        return {
+            success = true,
+            valid = true,
+            rulesId = sSkill,
+            testId = sTest,
+            effectType = "fixed",
+            modifier = tonumber(tEffect.value) or 0
+        }
+    end
+
+    if tEffect.type == "repeated-acquisition" then
+        local nAcquisitions =
+            CharacterSkillManagerWFRP1E.getAcquisitionCount(
+                nodeChar,
+                sSkill
+            )
+
+        if nAcquisitions < 1 then
+            return {
+                success = false,
+                valid = false,
+                rulesId = sSkill,
+                testId = sTest,
+                reason = "skill-not-owned"
+            }
+        end
+
+        local nModifier =
+            CharacterSkillManagerWFRP1E.getRepeatedAcquisitionModifier(
+                nodeChar,
+                sSkill
+            )
+
+        if nModifier == nil then
+            return {
+                success = false,
+                valid = false,
+                rulesId = sSkill,
+                testId = sTest,
+                reason = "missing-repeated-acquisition-rule"
+            }
+        end
+
+        return {
+            success = true,
+            valid = true,
+            rulesId = sSkill,
+            testId = sTest,
+            effectType = "repeated-acquisition",
+            acquisitions = nAcquisitions,
+            modifier = nModifier
+        }
+    end
+
+    return {
+        success = false,
+        valid = false,
+        rulesId = sSkill,
+        testId = sTest,
+        reason = "unsupported-skill-effect-type"
     }
 end
 
