@@ -13,10 +13,8 @@
 
     #10H exposes resolvable BASE target numbers.
 
-    #10I adds an intentionally narrow roll launcher:
-        Ctrl+Double-click the owned Skill name only when the Skill maps to
-        exactly one named Standard Test and that test's BASE target can be
-        resolved locally.
+    #10I adds the narrow Ctrl+Double-click roll launcher for an unambiguous,
+    locally resolvable named Standard Test.
 
     #10J diagnoses what this explicitly selected owned Skill contributes when
     that effect is a context-free fixed modifier or a verified repeated-
@@ -25,9 +23,11 @@
     #10K feeds that already-verified selected Skill modifier into the roll
     target. The clicked owned Skill is the explicit applicability choice.
 
-    Multiple candidate tests and context-dependent tests are deliberately not
-    launched from this row because selecting/resolving them requires explicit
-    GM/player input in later checkpoints.
+    #10L adds explicit named Standard Test selection when the selected Skill
+    has more than one candidate test. Ctrl+Double-click opens a transient,
+    non-persistent selector containing only tests whose #10K selected-Skill
+    target already resolves locally. Selecting one uses the same #10K roll
+    path; no new test mechanics are introduced here.
 ]]
 
 local function getCharacterNode()
@@ -100,6 +100,36 @@ local function getUnambiguousBaseTest(
     end
 
     return sTestId, tResolved
+end
+
+
+local function getLocallyRollableSelectedTests(
+    nodeChar,
+    sRulesId,
+    aPotentialTests
+)
+    local aRollable = {}
+
+    for _, sTestId in ipairs(aPotentialTests or {}) do
+        local tTarget =
+            StandardTestManagerWFRP1E.resolveSelectedSkillTarget(
+                nodeChar,
+                sRulesId,
+                sTestId
+            )
+
+        if tTarget.valid then
+            table.insert(
+                aRollable,
+                {
+                    testId = sTestId,
+                    target = tTarget.target
+                }
+            )
+        end
+    end
+
+    return aRollable
 end
 
 
@@ -204,6 +234,95 @@ local function addSelectedSkillModifierDiagnostics(
 end
 
 
+local function addRollActionDiagnostic(
+    nodeChar,
+    sRulesId,
+    aPotentialTests,
+    aLines
+)
+    if #aPotentialTests == 1 then
+        local sRollTestId, tBaseTarget =
+            getUnambiguousBaseTest(
+                nodeChar,
+                sRulesId
+            )
+
+        if not sRollTestId or not tBaseTarget then
+            return
+        end
+
+        local tSelectedTarget =
+            StandardTestManagerWFRP1E.resolveSelectedSkillTarget(
+                nodeChar,
+                sRulesId,
+                sRollTestId
+            )
+
+        if tSelectedTarget.valid then
+            table.insert(
+                aLines,
+                "Ctrl+Double-click: Roll "
+                .. sRollTestId
+                .. " test vs "
+                .. tostring(tSelectedTarget.target)
+                .. "% (base "
+                .. tostring(tSelectedTarget.baseTarget)
+                .. "% + Skill "
+                .. signedModifier(tSelectedTarget.skillModifier)
+                .. "%)"
+            )
+        else
+            table.insert(
+                aLines,
+                "Ctrl+Double-click: Roll BASE "
+                .. sRollTestId
+                .. " test vs "
+                .. tostring(tBaseTarget.baseTarget)
+                .. "% (no audited numeric Skill modifier)"
+            )
+        end
+
+        return
+    end
+
+    if #aPotentialTests < 2 then
+        return
+    end
+
+    local aRollable =
+        getLocallyRollableSelectedTests(
+            nodeChar,
+            sRulesId,
+            aPotentialTests
+        )
+
+    if #aRollable == 0 then
+        return
+    end
+
+    local aChoices = {}
+
+    for _, tChoice in ipairs(aRollable) do
+        table.insert(
+            aChoices,
+            tChoice.testId
+                .. " "
+                .. tostring(tChoice.target)
+                .. "%"
+        )
+    end
+
+    table.insert(
+        aLines,
+        "Ctrl+Double-click: Choose Standard Test: "
+        .. table.concat(
+            aChoices,
+            ", "
+        )
+    )
+end
+
+
 function refreshSkillTooltip()
     local nodeOwnedSkill = getDatabaseNode()
     local nodeChar = getCharacterNode()
@@ -278,45 +397,13 @@ function refreshSkillTooltip()
             aPotentialTests,
             aLines
         )
-    end
 
-    local sRollTestId, tBaseTarget =
-        getUnambiguousBaseTest(
+        addRollActionDiagnostic(
             nodeChar,
-            sRulesId
+            sRulesId,
+            aPotentialTests,
+            aLines
         )
-
-    if sRollTestId and tBaseTarget then
-        local tSelectedTarget =
-            StandardTestManagerWFRP1E.resolveSelectedSkillTarget(
-                nodeChar,
-                sRulesId,
-                sRollTestId
-            )
-
-        if tSelectedTarget.valid then
-            table.insert(
-                aLines,
-                "Ctrl+Double-click: Roll "
-                .. sRollTestId
-                .. " test vs "
-                .. tostring(tSelectedTarget.target)
-                .. "% (base "
-                .. tostring(tSelectedTarget.baseTarget)
-                .. "% + Skill "
-                .. signedModifier(tSelectedTarget.skillModifier)
-                .. "%)"
-            )
-        else
-            table.insert(
-                aLines,
-                "Ctrl+Double-click: Roll BASE "
-                .. sRollTestId
-                .. " test vs "
-                .. tostring(tBaseTarget.baseTarget)
-                .. "% (no audited numeric Skill modifier)"
-            )
-        end
     end
 
     name.setTooltipText(
@@ -328,26 +415,10 @@ function refreshSkillTooltip()
 end
 
 
-function handleBaseTestDoubleClick()
-    if not Input.isControlPressed() then
-        return false
-    end
-
-    local nodeOwnedSkill =
-        getDatabaseNode()
-
-    local nodeChar =
-        getCharacterNode()
-
-    if not nodeOwnedSkill or not nodeChar then
-        return false
-    end
-
-    local sRulesId =
-        getRulesId(
-            nodeOwnedSkill
-        )
-
+local function launchUnambiguousTest(
+    nodeChar,
+    sRulesId
+)
     local sTestId =
         getUnambiguousBaseTest(
             nodeChar,
@@ -385,6 +456,96 @@ function handleBaseTestDoubleClick()
     return
         tResult
         and tResult.launched == true
+end
+
+
+local function openAmbiguousTestSelector(
+    nodeChar,
+    sRulesId,
+    aPotentialTests
+)
+    local aRollable =
+        getLocallyRollableSelectedTests(
+            nodeChar,
+            sRulesId,
+            aPotentialTests
+        )
+
+    if #aRollable == 0 then
+        return false
+    end
+
+    local wSelector =
+        Interface.openWindow(
+            "wfrp1e_standard_test_selector",
+            ""
+        )
+
+    if not wSelector
+        or not wSelector.setContext
+    then
+        return false
+    end
+
+    local nCreated =
+        wSelector.setContext(
+            nodeChar,
+            sRulesId,
+            aPotentialTests
+        )
+
+    if not nCreated
+        or nCreated < 1
+    then
+        wSelector.close()
+        return false
+    end
+
+    return true
+end
+
+
+function handleBaseTestDoubleClick()
+    if not Input.isControlPressed() then
+        return false
+    end
+
+    local nodeOwnedSkill =
+        getDatabaseNode()
+
+    local nodeChar =
+        getCharacterNode()
+
+    if not nodeOwnedSkill or not nodeChar then
+        return false
+    end
+
+    local sRulesId =
+        getRulesId(
+            nodeOwnedSkill
+        )
+
+    local aPotentialTests =
+        DataStandardTestsWFRP1E.getPotentialStandardTestsForSkill(
+            sRulesId
+        )
+
+    if #aPotentialTests == 1 then
+        return launchUnambiguousTest(
+            nodeChar,
+            sRulesId
+        )
+    end
+
+    if #aPotentialTests > 1 then
+        return openAmbiguousTestSelector(
+            nodeChar,
+            sRulesId,
+            aPotentialTests
+        )
+    end
+
+    return false
 end
 
 
