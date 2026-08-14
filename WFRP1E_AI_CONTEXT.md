@@ -1,6 +1,6 @@
 # WFRP1E Fantasy Grounds — AI Resume Context
 
-Last updated: 2026-08-14 22:39 Europe/Warsaw
+Last updated: 2026-08-14 22:59 Europe/Warsaw
 
 This is the single authoritative resume/checkpoint file for the Fantasy Grounds WFRP 1e project. Update this file in place instead of creating overlapping context documents.
 
@@ -409,7 +409,9 @@ Standard Tests / Skill effects:
 - Charm +10 applies to its audited Fellowship tests when selected/applicable
 - Immunity to Disease +10 applies to Disease
 - Pick Pocket has a separate unskilled -30 path not yet implemented
-- Pick Lock requires possession and still needs lock-difficulty context
+- Pick Lock requires possession and uses `Dex - Lock Rating`; Lock Rating is 0-100%
+- one Pick Lock attempt takes one round/10 seconds
+- after three failed attempts by the same character on the same lock, further attempts automatically fail
 - Basic Test success is `D100 <= final percentage chance`
 - no target clamping rule has been introduced without explicit source verification
 - Standard Test identity/base data, Skill applicability/modification, situational modification and execution remain separate concerns
@@ -419,9 +421,9 @@ Standard Tests / Skill effects:
 Current verified CODE baseline after #10L merge:
 - `260b76785fbb3879c4a8c3daf2ee79475a80b250`
 
-This context-document update is metadata only and may make `main` one commit newer than the verified mechanics merge. Do not treat the metadata commit as a mechanics checkpoint.
+The context-document update is metadata only and may make `main` newer than the verified mechanics merge. Do not treat metadata commits as mechanics checkpoints.
 
-Important current files include:
+Important current verified files include:
 - `base.xml`
 - `campaign/record_char_main_wfrp1e.xml`
 - `campaign/record_char_career_skills_wfrp1e.xml`
@@ -443,18 +445,56 @@ Important current files include:
 - `scripts/manager_character_career_wfrp1e.lua`
 - `scripts/manager_character_experience_wfrp1e.lua`
 
-## 16. Next checkpoint
+## 16. CURRENT UNVERIFIED CHECKPOINT — #10M Pick Lock runtime Lock Rating context
 
-#10M is NOT frozen yet.
+STATUS: IMPLEMENTED, NOT YET FGU-VERIFIED, DO NOT MERGE.
 
-Before implementation:
-1. re-audit the next rule slice in the WFRP 1e Core Rulebook;
-2. inspect the read-only Foundry implementation only as architecture/reference;
-3. inspect official FGU APIs if a new UI/interaction primitive is required;
-4. preserve the explicit GM/player applicability boundary and one-checkpoint workflow.
+Git state:
+- branch: `agent/10m-pick-lock-context`
+- draft PR: #11 `#10M Pick Lock runtime Lock Rating context`
+- candidate head: `8eb5c25b449ecef6a9209aeb61c50c51b5f58be9`
+- base when PR opened: verified/context-updated `main` at `14b439bb0be0b2f2e12b8022b2f9d5dc266af1ed`
+- PR is open, draft and unmerged
+- exactly 5 changed files
 
-Candidate next boundaries to evaluate source-first:
-- one narrowly scoped Standard Test situational/default modifier path, or
-- one context-required base formula with explicit input (for example Pick Lock lock difficulty) if it is the smaller prerequisite.
+Rulebook audit for #10M:
+- English Core Rulebook printed p.70: Pick Lock requires the Skill; Lock Rating can be up to 100%; subtract Lock Rating from Dexterity; each attempt takes one round/10 seconds; after three failed attempts by the same character on the same lock, further attempts automatically fail.
+- Polish Core Rulebook printed p.69 states the same mechanic under Otwieranie zamków / jakość zamka.
+- repeated Pick Lock acquisitions continue to use the already-verified +10% per additional acquisition.
 
-Do not jump to a full Standard Test dialog, opposed tests, margins/degrees, broad situational automation or procedure-heavy Skills until their individual mechanics and FGU interaction contracts are audited.
+Architecture boundary:
+- Lock Rating is runtime test context only; it is NOT persisted on Character or Skill.
+- `resolveBaseTarget(..., context)` adds only the audited `dex - lockDifficulty` formula path; no generic formula parser.
+- final target remains base + explicitly selected Skill modifier.
+- no target clamping rule is invented.
+- no persistent lock identity or three-failure counter is invented because the system currently has no stable identity for “this same physical lock”.
+- chat carries the one-round/10-second and three-failure procedure reminder instead.
+- all earlier Standard Test calls remain compatible because context is optional.
+
+#10M files changed:
+- `base.xml`
+- `campaign/record_pick_lock_context_wfrp1e.xml` — new transient Pick Lock context window
+- `campaign/scripts/pick_lock_context_wfrp1e.lua` — new dialog controller
+- `campaign/scripts/char_skill_wfrp1e.lua` — Pick Lock opens context dialog; other #10K/#10L behavior preserved
+- `scripts/manager_standard_test_wfrp1e.lua` — explicit Lock Rating base resolution and Pick Lock roll context
+
+FGU resume test — run this before any merge:
+1. Load branch with no XML/Lua errors.
+2. Owned `pickLock` tooltip should preserve acquisition/repeat diagnostics and `Context required: pickLock`, plus `Ctrl+Double-click: Enter Lock Rating and roll pickLock`.
+3. Ctrl+Double-click Pick Lock opens transient PICK LOCK context dialog.
+4. Character Dex 25, one Pick Lock acquisition, Lock Rating 20 => base `25 - 20 = 5`, Skill +0, final target 5%.
+5. Second Pick Lock acquisition => target 15%; third => 25%; deleting one immediately drops target by 10.
+6. Lock Rating 0 and 100 are valid. Resulting final target is not clamped.
+7. Values below 0 or above 100 must roll no dice and report an input error.
+8. Actual roll uses the verified FGU percentile pair (`{ "d100" }` only) and chat reports Dex, Lock Rating, Base, selected Skill modifier, final Target, and SUCCESS/FAILURE.
+9. Chat after Pick Lock result includes the procedure reminder: one round/10 seconds per attempt; after three failures by this character on the same lock, further attempts automatically fail.
+10. Closing the dialog without rolling changes no persistent data.
+11. Regression: Pick Pocket direct roll, Immunity to Disease direct roll, and Charm #10L selector still work.
+12. Verify Lock Rating entry/rolling creates or changes no Character/Skill/XP/Career persistence.
+
+If all #10M tests pass, user should reply `verified`. Only then:
+1. re-check PR #11 head is still `8eb5c25b449ecef6a9209aeb61c50c51b5f58be9`;
+2. mark PR ready;
+3. merge PR #11 with expected head SHA;
+4. update this context file to record #10M PASS and the new verified mechanics merge;
+5. source-audit #10N before implementing anything else.
