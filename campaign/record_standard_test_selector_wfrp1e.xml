@@ -124,7 +124,7 @@
                         )
 
                     if tTarget.valid
-                        and nCreated < #aControls
+                        and nCreated &lt; #aControls
                     then
                         nCreated = nCreated + 1
 
