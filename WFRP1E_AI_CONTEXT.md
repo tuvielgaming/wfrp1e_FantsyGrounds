@@ -1,6 +1,6 @@
 # WFRP1E Fantasy Grounds — AI Resume Context
 
-Last updated: 2026-08-13 20:21 Europe/Warsaw
+Last updated: 2026-08-14 07:12 Europe/Warsaw
 
 This is the single authoritative resume/checkpoint file for the Fantasy Grounds WFRP 1e project. Update this file in place at the end of future sessions instead of creating multiple overlapping context documents.
 
@@ -23,7 +23,7 @@ Rules authority:
 - Do not invent WFRP rules or FGU APIs. Inspect rulebooks / official FGU docs / source before changing mechanics.
 - Original/authentic WFRP 1e behavior takes precedence over modern convenience.
 
-Rulebook archive supplied during this session:
+Rulebook archive supplied in conversation:
 - `WFRP Core RuleBooks(20260813-172815).zip`
 - In a new chat the archive may need to be re-uploaded if not available.
 
@@ -32,21 +32,19 @@ Rulebook archive supplied during this session:
 - Work incrementally, one tested checkpoint at a time.
 - User validates with `verified`, `next`, `continue`, or test feedback.
 - Do not jump multiple architecture stages.
-- `main` should normally represent the last verified state.
+- `main` should represent the last verified state.
 - New/unverified work normally goes to a dedicated test branch and is merged only after FGU verification.
 - Git pushes are preferred over dumping replacement files into chat.
-- If a file must be returned manually, provide exact repository path and the COMPLETE replacement file, never a patch/snippet.
+- If a file must be returned manually, provide exact repository path and the COMPLETE replacement file, never a snippet.
 - Do not modify the Foundry repository.
 - If context is missing, ask for the source/project files rather than hallucinating.
 - Avoid multiple documents describing the same topic; this file is the authoritative resume document.
 
-Important exception at end of this session:
-- #10E was accidentally merged to `main` BEFORE FGU verification.
-- Therefore the current `main` is NOT fully verified yet.
-- Last fully verified code baseline is #10D commit `08de1e8969b18029e4dbe8e8ef3c46c5c04e3cd3`.
-- Current code head before this context-document commit was `c10d2c6b5aaa83671ba4faafb581f629d6521709`.
-- `c10d2...` contains #10E code plus removal of the accidental temporary `10E.patch` transport file.
-- Do NOT treat #10E as PASS until the user tests it in FGU.
+Historical workflow exception:
+- #10E was accidentally merged to `main` before FGU verification.
+- The user later completed the full #10E FGU verification and explicitly reported it verified on 2026-08-14.
+- Therefore #10E is now PASS and `main` is again the verified baseline.
+- Temporary transport file `10E.patch` was removed and must not be re-added.
 
 ## 3. Frozen characteristic model
 
@@ -119,6 +117,7 @@ Final visible Experience UI:
 
 Advance cost:
 - 100 XP for both +1 and +10 characteristic advances
+- 100 XP for each later-Career Skill acquisition
 
 FGU focus behavior:
 - before advancement actions, code clears `experience.subwindow.available` focus
@@ -130,10 +129,10 @@ A single in-memory transaction spans multiple advancement purchases while the sa
 
 Starts lazily on first successful purchase.
 
-Characteristic transaction state includes baseline spent/purchased values and per-characteristic deltas.
+Characteristic and Career-Skill purchases share the same Experience ledger and transaction lifetime.
 
-Ctrl+Left refunds only advances bought during the current transaction.
-Historical advances are protected.
+Ctrl+Left refunds only advances/Skills bought during the current transaction.
+Historical purchases are protected.
 
 Transaction survives Character tab switches.
 
@@ -149,6 +148,8 @@ Interface.addKeyedEventHandler(
 ```
 
 Closing the top-level Character sheet ends the transaction. Reopening leaves persistent purchases in place but they are no longer refundable.
+
+Mixed characteristic + Career-Skill purchase/refund sequences were verified under #10E.
 
 ## 6. Frozen inline advancement UX (#9F PASS)
 
@@ -190,7 +191,6 @@ Earlier checkpoints #1–#9D.1: PASS except rejected #9C.1 focus-overlay experim
 
 #9F: PASS
 - final inline marker colors, spacing, and custom completion icon
-- merged to main previously
 
 #10A: PASS — Skill record data contract
 Skill record fields:
@@ -228,14 +228,12 @@ Semantics:
 - other duplicate acquisitions remain
 
 #10D: PASS — Career Skill Offers persistence
-Last fully verified code baseline commit:
-- `08de1e8969b18029e4dbe8e8ef3c46c5c04e3cd3`
-
 Career gets SKILLS list.
 Each Career Skill Offer stores/copies:
 - name
 - rulesId
 - specialisation
+- description
 - optional chance percentage metadata
 
 Career Skill Offer UI:
@@ -247,14 +245,51 @@ Career Skill Offer UI:
 
 `chance` is metadata only. It is NOT later-Career purchase eligibility.
 
-## 8. Rulebook conclusions for Career Skills
+#10E: PASS — Current Career Skill purchase for 100 XP
+Verified by user in FGU on 2026-08-14.
+
+Behavior verified:
+- assigning Career does not automatically grant Skills
+- CURRENT CAREER SKILLS shows current Career offers
+- each current-Career offer can be purchased once for 100 XP
+- purchase creates one normal owned Character Skill snapshot
+- same `rulesId` already owned historically does not block a current-Career offer purchase
+- insufficient XP blocks purchase
+- Ctrl+Left refunds only a Skill bought during the current open Character-sheet transaction
+- refund restores 100 XP and removes only the owned acquisition created by that purchase
+- closing/reopening Character sheet preserves the purchase but ends refundability
+- mixed characteristic + Career-Skill transactions remain coherent
+- ordinary manual Skill drag/drop/deletion still works
+- Career assignment and characteristic advancement headers still work
+
+#10E files:
+- `base.xml`
+- `campaign/record_career_skills_wfrp1e.xml`
+- `campaign/record_char_career_skills_wfrp1e.xml`
+- `campaign/scripts/char_career_skill_wfrp1e.lua`
+- `campaign/scripts/char_career_skills_layer_wfrp1e.lua`
+
+#10E Character-side model:
+- current Career Skill offers are snapshotted for the Character
+- current Career points to the active snapshot via `career.current.skillsPath`
+- per-offer persistent state:
+  - name
+  - rulesId
+  - specialisation
+  - chance
+  - description
+  - purchased (0/1)
+- source Career identity is recorded so reopening reuses the same snapshot instead of rewriting from later source edits
+- old snapshots are preserved rather than destructively deleted
+
+## 8. Rulebook conclusions for Career Skills and repetition
 
 Both English and Polish Core Rulebooks confirm:
 - when changing Career, new Career Skills are NOT gained automatically
 - each new Skill is acquired like a characteristic advance for 100 XP/PD
 - old Skills are retained
 
-Relevant section confirmed during session:
+Relevant section confirmed:
 - English Core Rulebook p. 92, “New Skills”
 - Polish Core Rulebook p. 92, “Nowe Umiejętności”
 
@@ -264,114 +299,54 @@ Repeated acquisition matters in WFRP 1e:
 - Pick Lock / Pick Pocket can gain +10% per additional acquisition
 - Musicianship / Speak Additional Language / Specialist Weapon can repeat to add specialisations/categories
 
-Therefore do NOT globally block a Career Skill purchase just because the Character already owns the same rulesId historically. Purchase state must be associated with the current Career offer instance.
+Therefore:
+- do NOT globally block a Career Skill purchase because the Character already owns the same rulesId
+- one owned acquisition instance must remain independently represented
+- repeated-acquisition mechanics must be rule-specific, not one universal generic rank bonus
 
-## 9. #10E — CURRENT STATE: IMPLEMENTED ON MAIN, NOT YET FGU-VERIFIED
+## 9. Current verified baseline
 
-This is the immediate next task when resuming.
+#10E is PASS.
 
-Current `main` contains #10E code, but user ended the session before testing it.
-
-#10E goal:
-- Career Skill offered by current Career can be acquired for 100 XP
-- later-Career Skills are not automatically granted
-- purchase creates a normal owned Character Skill snapshot
-- purchase/refund participates in the same Character-sheet edit transaction as characteristic advances
-
-Files introduced/changed by #10E relative to verified #10D:
-- `base.xml` (+ include)
-- `campaign/record_career_skills_wfrp1e.xml` (+ description copied on Career Skill drop)
-- `campaign/record_char_career_skills_wfrp1e.xml` (new)
-- `campaign/scripts/char_career_skill_wfrp1e.lua` (new)
-- `campaign/scripts/char_career_skills_layer_wfrp1e.lua` (new)
-
-Temporary transport file `10E.patch` was accidentally committed by the user and then removed from main in cleanup commit:
+Verified code state before context-only commits:
 - `c10d2c6b5aaa83671ba4faafb581f629d6521709`
 
-Do not re-add `10E.patch`.
+Context-only commits after that do not change ruleset behavior.
 
-#10E Character-side model:
-- current Career Skill offers are snapshotted for the Character
-- current Career points to the active snapshot via `career.current.skillsPath`
-- per-offer persistent state includes:
-  - name
-  - rulesId
-  - specialisation
-  - chance
-  - description
-  - purchased (0/1)
-- Career source identity is recorded so reopening the sheet reuses the same snapshot instead of rewriting from later source edits
-- old snapshots are preserved rather than destructively deleted
+At the time this file was updated, `main` contains the verified #10E code and is the correct baseline for the next checkpoint.
 
-#10E interaction intent:
-- `[+]` = not yet acquired from current Career offer
-- Left click => acquire for 100 XP if available
-- successful purchase:
-  - spends 100 XP
-  - creates owned Character Skill under `character.skills.<unique id>`
-  - sets offer purchased=1
-  - participates in current advancement edit transaction
-- completion marker uses same custom check icon as characteristic advancement
-- Ctrl+Left => refund only if this Skill was bought in the current still-open Character transaction
-- closing/reopening Character sheet ends refundability while preserving purchase
-- insufficient XP blocks buy
-- chance metadata must not affect buy eligibility
+Temporary transport file `10E.patch` was removed and must not be re-added.
 
-Important transaction requirement:
-- mixed purchases must remain coherent, e.g. Characteristic -> Skill -> Characteristic
-- refunding current-transaction Skill must restore 100 XP and remove only the owned Skill created by that transaction purchase
-- characteristic refund behavior must still work in same mixed transaction
+## 10. Next checkpoint candidate — #10F
 
-## 10. #10E FGU TEST CHECKLIST — DO THIS FIRST NEXT SESSION
+Do a source pass before implementation.
 
-Before any new implementation, pull current `main` and test #10E.
+Primary candidate:
+- repeated-acquisition mechanics / acquisition-count foundation
 
-Test at least:
-1. No XML/Lua/console errors on ruleset load.
-2. Assign a Career with Skill offers to a Character.
-3. CURRENT CAREER SKILLS appears below normal owned Skills.
-4. Career Skill offers show correct name/specialisation/chance metadata.
-5. No Skill is automatically added to owned Character Skills merely by Career assignment.
-6. With >=100 XP available, left-click `[+]` on one Career Skill:
-   - Available XP decreases by 100
-   - one owned Skill appears in normal Character Skills
-   - offer becomes complete/check state
-7. Try purchasing same current-Career offer again: must not create another copy.
-8. If Character already had same rulesId historically before Career assignment, current Career offer must still be purchasable once.
-9. With <100 available XP, pending offer must not be purchasable.
-10. During same open Character sheet, Ctrl+Left the just-bought Skill:
-   - owned acquisition created by this purchase disappears
-   - 100 XP is restored
-   - offer returns to pending
-11. Buy again, close Character sheet, reopen:
-   - purchase persists
-   - it is no longer refundable
-12. Mixed transaction regression:
-   - buy a characteristic advance
-   - buy a Career Skill
-   - buy another characteristic advance
-   - refund the current-transaction Skill and/or characteristics
-   - XP ledger and characteristic purchased counts remain coherent
-13. Re-test ordinary manual Character Skill drag/drop and deletion (#10B/#10C) still work.
-14. Re-test Career assignment and characteristic headers (#9F) still work.
+Do NOT assume one universal effect for every repeated Skill.
 
-If all pass, mark #10E PASS. Because #10E is already on main, no merge is needed; simply record the verified main commit in this file.
+Likely smallest safe scope:
+- provide a stable way to count owned acquisitions by `rulesId`
+- expose that count to rule-specific Skill mechanics
+- implement only the explicitly confirmed repeat-bonus Skills if the rulebook/source pass supports doing so cleanly
 
-If #10E fails:
-- DO NOT treat main as verified.
-- Last verified code rollback/reference point remains:
-  `08de1e8969b18029e4dbe8e8ef3c46c5c04e3cd3` (#10D PASS)
-- Fix #10E on a dedicated branch from the appropriate point; do not continue to #10F until #10E passes.
+Need to inspect before coding:
+- English and Polish Skill descriptions for repeated acquisition semantics
+- read-only Foundry `StandardTestSkillResolver` and skill-rule identities/rules
+- current Character Skill manager and any future Standard Test dependency
 
-## 11. What NOT to implement yet
+Do not jump directly into generic Skill test rolling.
 
-Until #10E is verified, do not continue into:
-- repeated-acquisition mechanical bonuses (+10% etc.)
+## 11. Still deferred
+
+Do not implement without a dedicated checkpoint/source pass:
 - Standard Test automation
 - generic Skill characteristic mapping
-- Skill test rolling
+- full Skill test rolling
 - first-Career random/probability generation mechanics
 - final polished Skills sheet redesign
+- remaining Wounds/damage subsystem
 
 ## 12. Current key source files
 
@@ -401,5 +376,5 @@ Core project files include:
 
 Start by reading this entire file and inspecting current `main`.
 Do not redesign already frozen mechanics.
-Do not assume #10E passed: the first action is FGU verification using the checklist above.
-Only after user says `verified` should #10E be frozen as PASS and the next checkpoint be planned.
+#10E is verified PASS.
+Continue with a source-first #10F checkpoint from current verified `main`.
