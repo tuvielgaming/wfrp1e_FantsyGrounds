@@ -121,6 +121,10 @@
     />
 
     <includefile
+        source="campaign/record_pick_lock_context_wfrp1e.xml"
+    />
+
+    <includefile
         source="campaign/record_career_wfrp1e.xml"
     />
 
