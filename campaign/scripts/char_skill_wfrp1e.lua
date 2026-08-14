@@ -12,22 +12,14 @@
     to the GM.
 
     #10H exposes resolvable BASE target numbers.
+    #10I adds the narrow Ctrl+Double-click roll launcher.
+    #10J resolves selected-Skill numeric modifiers.
+    #10K feeds that modifier into the executable target.
+    #10L adds explicit named-test selection for ambiguous Skills.
 
-    #10I adds the narrow Ctrl+Double-click roll launcher for an unambiguous,
-    locally resolvable named Standard Test.
-
-    #10J diagnoses what this explicitly selected owned Skill contributes when
-    that effect is a context-free fixed modifier or a verified repeated-
-    acquisition modifier.
-
-    #10K feeds that already-verified selected Skill modifier into the roll
-    target. The clicked owned Skill is the explicit applicability choice.
-
-    #10L adds explicit named Standard Test selection when the selected Skill
-    has more than one candidate test. Ctrl+Double-click opens a transient,
-    non-persistent selector containing only tests whose #10K selected-Skill
-    target already resolves locally. Selecting one uses the same #10K roll
-    path; no new test mechanics are introduced here.
+    #10M adds one explicit context path for Pick Lock. Ctrl+Double-click on an
+    owned Pick Lock Skill opens a transient Lock Rating dialog. The supplied
+    rating is runtime context only; no lock data is persisted on the Character.
 ]]
 
 local function getCharacterNode()
@@ -241,6 +233,17 @@ local function addRollActionDiagnostic(
     aLines
 )
     if #aPotentialTests == 1 then
+        if sRulesId == "pickLock"
+            and aPotentialTests[1] == "pickLock"
+        then
+            table.insert(
+                aLines,
+                "Ctrl+Double-click: Enter Lock Rating and roll pickLock"
+            )
+
+            return
+        end
+
         local sRollTestId, tBaseTarget =
             getUnambiguousBaseTest(
                 nodeChar,
@@ -505,6 +508,31 @@ local function openAmbiguousTestSelector(
 end
 
 
+local function openPickLockContext(
+    nodeChar,
+    sRulesId
+)
+    local wContext =
+        Interface.openWindow(
+            "wfrp1e_pick_lock_context",
+            ""
+        )
+
+    if not wContext
+        or not wContext.setContext
+    then
+        return false
+    end
+
+    wContext.setContext(
+        nodeChar,
+        sRulesId
+    )
+
+    return true
+end
+
+
 function handleBaseTestDoubleClick()
     if not Input.isControlPressed() then
         return false
@@ -529,6 +557,16 @@ function handleBaseTestDoubleClick()
         DataStandardTestsWFRP1E.getPotentialStandardTestsForSkill(
             sRulesId
         )
+
+    if sRulesId == "pickLock"
+        and #aPotentialTests == 1
+        and aPotentialTests[1] == "pickLock"
+    then
+        return openPickLockContext(
+            nodeChar,
+            sRulesId
+        )
+    end
 
     if #aPotentialTests == 1 then
         return launchUnambiguousTest(
