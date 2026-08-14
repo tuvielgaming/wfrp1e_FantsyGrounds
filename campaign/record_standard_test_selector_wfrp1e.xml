@@ -41,16 +41,6 @@
             local nodeCharacter = nil
             local sSelectedSkillRulesId = ""
 
-            local function signedModifier(nModifier)
-                nModifier = tonumber(nModifier) or 0
-
-                if nModifier >= 0 then
-                    return "+" .. tostring(nModifier)
-                end
-
-                return tostring(nModifier)
-            end
-
             local function handleTestSelected(sTestId)
                 if not nodeCharacter then
                     return
@@ -131,7 +121,6 @@
 
             <windowlist name="choices">
                 <bounds>20,72,-20,-20</bounds>
-                <noscroll />
             </windowlist>
 
         </sheetdata>
