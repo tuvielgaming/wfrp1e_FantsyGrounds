@@ -244,9 +244,12 @@ function performBaseTest(nodeChar, sTestId)
         characterName = getCharacterDisplayName(nodeChar)
     }
 
+    -- FGU treats d100 as its percentile tens die and automatically adds the
+    -- companion d10. Supplying d10 explicitly would therefore create a third
+    -- die and inflate the roll pool.
     Comm.throwDice(
         ROLL_TYPE,
-        { "d100", "d10" },
+        { "d100" },
         0,
         "[WFRP1E BASE TEST] "
             .. tResolved.testId
