@@ -2,45 +2,38 @@
     WFRP1E
     Standard Test manager
 
-    #10H resolves only the audited BASE target that can be derived from
-    Character data without situational inputs.
+    #10H resolves audited BASE targets.
+    #10I adds the verified D100 roll lifecycle.
+    #10J resolves one explicitly selected owned Skill modifier.
+    #10K applies that selected Skill modifier to the executable target.
+    #10L adds explicit named-test selection for ambiguous Skills without
+    changing mechanics.
 
-    #10I adds one deliberately narrow executable path:
-        - roll a plain D100 against an already-resolved BASE target;
-        - success when roll <= target;
-        - report roll, target and success/failure to chat.
+    #10M adds one audited runtime-context formula only:
 
-    #10J adds diagnostic resolution for one explicitly selected owned Skill:
-        - the caller chooses the Skill; no automatic applicability decision;
-        - context-free fixed modifiers are read from audited static data;
-        - Pick Lock / Pick Pocket repeated-acquisition modifiers reuse the
-          verified Character Skill acquisition-count logic.
+        Pick Lock base = Dexterity - Lock Rating
 
-    #10K applies that already-audited selected Skill modifier to the executable
-    target when both the BASE target and selected Skill modifier resolve
-    without additional context:
-
-        final target = base target + selected Skill modifier
-
-    The result is deliberately not clamped. No unverified minimum/maximum
-    percentage rule is introduced here.
+    Lock Rating is supplied explicitly for one execution and is not persisted.
+    The result is deliberately not clamped. No generic formula parser is added.
 
     Deliberate exclusions:
         - no automatic Skill applicability decision
-        - no situational modifiers
+        - no general situational/default modifier stack
         - no conditional/choice/derived/target-side Skill effects
         - no generic formula parser
-        - no target/noise/lock-difficulty resolution
-        - no test-selection dialog
+        - no target/noise resolution
+        - no persistent lock identity or Pick Lock failure counter
         - no margins/degrees/opposed tests/effects
 
     Supported locally resolvable bases:
-        characteristic     direct current characteristic value
-        s * 10             current Strength multiplied by 10
-        t * 10             current Toughness multiplied by 10
-        50                 fixed base 50
+        characteristic             direct current characteristic value
+        s * 10                     current Strength multiplied by 10
+        t * 10                     current Toughness multiplied by 10
+        50                         fixed base 50
+        dex - lockDifficulty       explicit Pick Lock runtime context
 
-    Context-dependent formulas return a structured context-required result.
+    Other context-dependent formulas still return a structured
+    context-required result.
 ]]
 
 local ROLL_TYPE = "wfrp1e_standard_test_base"
@@ -161,7 +154,19 @@ local function resolvedResult(
 end
 
 
-function resolveBaseTarget(nodeChar, sTestId)
+local function contextRequiredResult(tDefinition)
+    return {
+        success = false,
+        valid = false,
+        testId = tDefinition.id,
+        reason = "context-required",
+        formula = tDefinition.formula,
+        defaultModifier = tonumber(tDefinition.defaultModifier) or 0
+    }
+end
+
+
+function resolveBaseTarget(nodeChar, sTestId, tContext)
     if not nodeChar then
         return failure("no-character", sTestId)
     end
@@ -234,14 +239,56 @@ function resolveBaseTarget(nodeChar, sTestId)
         )
     end
 
-    return {
-        success = false,
-        valid = false,
-        testId = tDefinition.id,
-        reason = "context-required",
-        formula = tDefinition.formula,
-        defaultModifier = tonumber(tDefinition.defaultModifier) or 0
-    }
+    if tDefinition.formula == "dex - lockDifficulty" then
+        local nLockDifficulty =
+            tContext
+            and tonumber(tContext.lockDifficulty)
+            or nil
+
+        if nLockDifficulty == nil then
+            return contextRequiredResult(tDefinition)
+        end
+
+        if nLockDifficulty < 0
+            or nLockDifficulty > 100
+        then
+            return {
+                success = false,
+                valid = false,
+                testId = tDefinition.id,
+                reason = "invalid-lock-rating",
+                formula = tDefinition.formula,
+                lockDifficulty = nLockDifficulty,
+                defaultModifier = tonumber(tDefinition.defaultModifier) or 0
+            }
+        end
+
+        local nDexterity, sReason =
+            getCurrentCharacteristic(
+                nodeChar,
+                "dex"
+            )
+
+        if nDexterity == nil then
+            return failure(sReason, tDefinition.id)
+        end
+
+        local tResult =
+            resolvedResult(
+                tDefinition.id,
+                nDexterity - nLockDifficulty,
+                "lock-difficulty",
+                "dex",
+                tDefinition.defaultModifier
+            )
+
+        tResult.characteristicValue = nDexterity
+        tResult.lockDifficulty = nLockDifficulty
+
+        return tResult
+    end
+
+    return contextRequiredResult(tDefinition)
 end
 
 
@@ -381,12 +428,14 @@ end
 function resolveSelectedSkillTarget(
     nodeChar,
     sRulesId,
-    sTestId
+    sTestId,
+    tContext
 )
     local tBase =
         resolveBaseTarget(
             nodeChar,
-            sTestId
+            sTestId,
+            tContext
         )
 
     if not tBase.valid then
@@ -424,7 +473,10 @@ function resolveSelectedSkillTarget(
         skillModifier = nSkillModifier,
         target = tBase.baseTarget + nSkillModifier,
         effectType = tSkill.effectType,
-        acquisitions = tSkill.acquisitions
+        acquisitions = tSkill.acquisitions,
+        characteristic = tBase.characteristic,
+        characteristicValue = tBase.characteristicValue,
+        lockDifficulty = tBase.lockDifficulty
     }
 end
 
@@ -445,11 +497,12 @@ local function getCharacterDisplayName(nodeChar)
 end
 
 
-function performBaseTest(nodeChar, sTestId)
+function performBaseTest(nodeChar, sTestId, tContext)
     local tResolved =
         resolveBaseTarget(
             nodeChar,
-            sTestId
+            sTestId,
+            tContext
         )
 
     if not tResolved.valid then
@@ -459,7 +512,9 @@ function performBaseTest(nodeChar, sTestId)
     local tRollData = {
         testId = tResolved.testId,
         target = tResolved.baseTarget,
-        characterName = getCharacterDisplayName(nodeChar)
+        characterName = getCharacterDisplayName(nodeChar),
+        characteristicValue = tResolved.characteristicValue,
+        lockDifficulty = tResolved.lockDifficulty
     }
 
     -- FGU treats d100 as its percentile tens die and automatically adds the
@@ -483,7 +538,9 @@ function performBaseTest(nodeChar, sTestId)
         launched = true,
         testId = tResolved.testId,
         baseTarget = tResolved.baseTarget,
-        target = tResolved.baseTarget
+        target = tResolved.baseTarget,
+        characteristicValue = tResolved.characteristicValue,
+        lockDifficulty = tResolved.lockDifficulty
     }
 end
 
@@ -491,13 +548,15 @@ end
 function performSelectedSkillTest(
     nodeChar,
     sRulesId,
-    sTestId
+    sTestId,
+    tContext
 )
     local tResolved =
         resolveSelectedSkillTarget(
             nodeChar,
             sRulesId,
-            sTestId
+            sTestId,
+            tContext
         )
 
     if not tResolved.valid then
@@ -511,7 +570,9 @@ function performSelectedSkillTest(
         baseTarget = tResolved.baseTarget,
         skillModifier = tResolved.skillModifier,
         target = tResolved.target,
-        characterName = getCharacterDisplayName(nodeChar)
+        characterName = getCharacterDisplayName(nodeChar),
+        characteristicValue = tResolved.characteristicValue,
+        lockDifficulty = tResolved.lockDifficulty
     }
 
     Comm.throwDice(
@@ -534,7 +595,9 @@ function performSelectedSkillTest(
         rulesId = tResolved.rulesId,
         baseTarget = tResolved.baseTarget,
         skillModifier = tResolved.skillModifier,
-        target = tResolved.target
+        target = tResolved.target,
+        characteristicValue = tResolved.characteristicValue,
+        lockDifficulty = tResolved.lockDifficulty
     }
 end
 
@@ -607,24 +670,59 @@ function onBaseTestDiceLanded(draginfo)
                 or "skill"
             )
 
+        local sText =
+            "[WFRP1E TEST] "
+            .. sCharacterName
+            .. " | "
+            .. sTestId
+            .. " | Roll "
+            .. tostring(nRoll)
+
+        local nLockDifficulty =
+            tonumber(tRollData.lockDifficulty)
+
+        local nCharacteristicValue =
+            tonumber(tRollData.characteristicValue)
+
+        if sTestId == "pickLock"
+            and nLockDifficulty ~= nil
+        then
+            if nCharacteristicValue ~= nil then
+                sText =
+                    sText
+                    .. " | Dex "
+                    .. tostring(nCharacteristicValue)
+                    .. "%"
+            end
+
+            sText =
+                sText
+                .. " | Lock Rating "
+                .. tostring(nLockDifficulty)
+                .. "%"
+        end
+
+        sText =
+            sText
+            .. " | Base "
+            .. tostring(nBaseTarget)
+            .. "% | Skill "
+            .. sSkillRulesId
+            .. " "
+            .. signedModifier(nSkillModifier)
+            .. "% | Target "
+            .. tostring(nTarget)
+            .. "% | "
+            .. sOutcome
+
+        if sTestId == "pickLock" then
+            sText =
+                sText
+                .. " | Pick Lock procedure: one round/10 sec per attempt; after 3 failed attempts by this character on the same lock, further attempts automatically fail."
+        end
+
         Comm.deliverChatMessage({
-            text =
-                "[WFRP1E TEST] "
-                .. sCharacterName
-                .. " | "
-                .. sTestId
-                .. " | Roll "
-                .. tostring(nRoll)
-                .. " | Base "
-                .. tostring(nBaseTarget)
-                .. "% | Skill "
-                .. sSkillRulesId
-                .. " "
-                .. signedModifier(nSkillModifier)
-                .. "% | Target "
-                .. tostring(nTarget)
-                .. "% | "
-                .. sOutcome,
+            text = sText,
             mode = "system",
             type = ROLL_TYPE
         })
