@@ -1,9 +1,10 @@
 --[[
     WFRP1E
-    Bribe runtime-context preview dialog
+    Bribe runtime-context dialog
 
-    #10P calculates the final Bribe target only. It deliberately does not roll.
-    All inputs are transient and no Character/Skill/Career/XP data is written.
+    #10P verified preview calculation and validation.
+    #10Q keeps that preview and adds explicit roll execution from the same
+    transient inputs. No Character/Skill/Career/XP data is written.
 ]]
 
 local nodeCharacter = nil
@@ -66,11 +67,47 @@ local function setCalculatedResult(tResult)
 end
 
 
+local function getContext()
+    return {
+        targetWP = target_wp.getValue(),
+        alignmentModifier = alignment_modifier.getValue(),
+        offerIncrements = offer_increments.getValue(),
+        otherModifier = other_modifier.getValue()
+    }
+end
+
+
+local function showResolutionError(tResult)
+    local sReason =
+        tostring(
+            tResult
+            and tResult.reason
+            or "invalid-context"
+        )
+
+    if sReason == "invalid-target-wp" then
+        setResultMessage("Target WP must be between 0% and 100%.")
+    elseif sReason == "invalid-alignment-modifier" then
+        setResultMessage("Alignment modifier must be -20, -10, 0, +10 or +20%.")
+    elseif sReason == "invalid-offer-increments" then
+        setResultMessage("Extra 50% steps must be a whole number of 0 or more.")
+    else
+        setResultMessage("Unable to resolve Bribe test: " .. sReason)
+    end
+end
+
+
 function onInit()
     calculate_button.setText(
         "CALCULATE",
         "CALCULATE",
         "CALCULATE"
+    )
+
+    roll_button.setText(
+        "ROLL",
+        "ROLL",
+        "ROLL"
     )
 end
 
@@ -86,7 +123,7 @@ function setContext(nodeChar, sRulesId)
 
     clearResult()
     setResultMessage(
-        "Enter context and press CALCULATE. No dice will be rolled."
+        "Enter context. CALCULATE previews; ROLL executes the same target."
     )
 end
 
@@ -100,30 +137,39 @@ function handleCalculate()
         BribeContextManagerWFRP1E.resolvePreview(
             nodeCharacter,
             sSelectedSkillRulesId,
-            {
-                targetWP = target_wp.getValue(),
-                alignmentModifier = alignment_modifier.getValue(),
-                offerIncrements = offer_increments.getValue(),
-                otherModifier = other_modifier.getValue()
-            }
+            getContext()
         )
 
     if not tResult.valid then
-        local sReason = tostring(tResult.reason or "invalid-context")
-
-        if sReason == "invalid-target-wp" then
-            setResultMessage("Target WP must be between 0% and 100%.")
-        elseif sReason == "invalid-alignment-modifier" then
-            setResultMessage("Alignment modifier must be -20, -10, 0, +10 or +20%.")
-        elseif sReason == "invalid-offer-increments" then
-            setResultMessage("Extra 50% steps must be a whole number of 0 or more.")
-        else
-            setResultMessage("Unable to resolve Bribe preview: " .. sReason)
-        end
-
+        showResolutionError(tResult)
         return false
     end
 
     setCalculatedResult(tResult)
+    return true
+end
+
+
+function handleRoll()
+    if not nodeCharacter then
+        return false
+    end
+
+    local tResult =
+        BribeContextManagerWFRP1E.performTest(
+            nodeCharacter,
+            sSelectedSkillRulesId,
+            getContext()
+        )
+
+    if not tResult.valid
+        or tResult.launched ~= true
+    then
+        showResolutionError(tResult)
+        return false
+    end
+
+    setCalculatedResult(tResult)
+    close()
     return true
 end
