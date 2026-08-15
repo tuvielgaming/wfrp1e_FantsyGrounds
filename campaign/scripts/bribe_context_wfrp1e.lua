@@ -21,9 +21,47 @@ local function signedModifier(nModifier)
 end
 
 
-local function setResultText(sText)
-    result_text.setValue(
+local function clearResult()
+    result_line_1.setValue("")
+    result_line_2.setValue("")
+    result_line_3.setValue("")
+end
+
+
+local function setResultMessage(sText)
+    result_line_1.setValue(
         tostring(sText or "")
+    )
+    result_line_2.setValue("")
+    result_line_3.setValue("")
+end
+
+
+local function setCalculatedResult(tResult)
+    result_line_1.setValue(
+        "Base "
+        .. tostring(tResult.baseTarget)
+        .. "% (100 - WP "
+        .. tostring(tResult.targetWP)
+        .. ") | Skill "
+        .. signedModifier(tResult.skillModifier)
+        .. "%"
+    )
+
+    result_line_2.setValue(
+        "Alignment "
+        .. signedModifier(tResult.alignmentModifier)
+        .. "% | Offer "
+        .. signedModifier(tResult.offerModifier)
+        .. "% | Other "
+        .. signedModifier(tResult.otherModifier)
+        .. "%"
+    )
+
+    result_line_3.setValue(
+        "FINAL TARGET "
+        .. tostring(tResult.target)
+        .. "%"
     )
 end
 
@@ -46,7 +84,8 @@ function setContext(nodeChar, sRulesId)
     offer_increments.setValue(0)
     other_modifier.setValue(0)
 
-    setResultText(
+    clearResult()
+    setResultMessage(
         "Enter context and press CALCULATE. No dice will be rolled."
     )
 end
@@ -73,35 +112,18 @@ function handleCalculate()
         local sReason = tostring(tResult.reason or "invalid-context")
 
         if sReason == "invalid-target-wp" then
-            setResultText("Target WP must be between 0% and 100%.")
+            setResultMessage("Target WP must be between 0% and 100%.")
         elseif sReason == "invalid-alignment-modifier" then
-            setResultText("Alignment modifier must be -20, -10, 0, +10 or +20%.")
+            setResultMessage("Alignment modifier must be -20, -10, 0, +10 or +20%.")
         elseif sReason == "invalid-offer-increments" then
-            setResultText("Extra 50% steps must be a whole number of 0 or more.")
+            setResultMessage("Extra 50% steps must be a whole number of 0 or more.")
         else
-            setResultText("Unable to resolve Bribe preview: " .. sReason)
+            setResultMessage("Unable to resolve Bribe preview: " .. sReason)
         end
 
         return false
     end
 
-    setResultText(
-        "Base "
-        .. tostring(tResult.baseTarget)
-        .. "% (100 - WP "
-        .. tostring(tResult.targetWP)
-        .. ") | Skill "
-        .. signedModifier(tResult.skillModifier)
-        .. "% | Alignment "
-        .. signedModifier(tResult.alignmentModifier)
-        .. "% | Offer "
-        .. signedModifier(tResult.offerModifier)
-        .. "% | Other "
-        .. signedModifier(tResult.otherModifier)
-        .. "% | FINAL TARGET "
-        .. tostring(tResult.target)
-        .. "%"
-    )
-
+    setCalculatedResult(tResult)
     return true
 end
