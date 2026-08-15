@@ -1,0 +1,169 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+
+<root>
+
+    <!--
+        #10P transient Bribe context preview
+
+        No persistent data. No roll.
+        The GM establishes the minimum acceptable bribe externally.
+    -->
+
+    <windowclass name="wfrp1e_bribe_context">
+
+        <frame>utilitybox</frame>
+
+        <placement>
+            <size>
+                <width>610</width>
+                <height>390</height>
+            </size>
+        </placement>
+
+        <sizelimits>
+            <minimum>
+                <width>610</width>
+                <height>390</height>
+            </minimum>
+            <maximum>
+                <width>610</width>
+                <height>390</height>
+            </maximum>
+        </sizelimits>
+
+        <script file="campaign/scripts/bribe_context_wfrp1e.lua" />
+
+        <sheetdata>
+
+            <label name="title">
+                <bounds>24,20,-64,22</bounds>
+                <color>#FFFFFF</color>
+                <static text="BRIBE CONTEXT" />
+            </label>
+
+            <buttoncontrol name="close_button">
+                <bounds>-54,16,30,28</bounds>
+                <font>sheettext</font>
+                <color>#FFFFFF</color>
+                <text>X</text>
+
+                <hover>
+                    <frame name="fieldfocus" offset="3,2,3,2" />
+                    <text>X</text>
+                </hover>
+
+                <tooltip text="Close" />
+
+                <script>
+                    function onButtonPress()
+                        window.close()
+                    end
+                </script>
+            </buttoncontrol>
+
+            <label name="hint1">
+                <bounds>24,48,-24,20</bounds>
+                <color>#FFFFFF</color>
+                <static text="GM establishes the minimum acceptable bribe first; the offer may not be lower." />
+            </label>
+
+            <label name="hint2">
+                <bounds>24,70,-24,20</bounds>
+                <color>#FFFFFF</color>
+                <static text="This checkpoint previews the final percentage only; it does not roll dice." />
+            </label>
+
+            <label name="target_wp_label">
+                <bounds>24,108,230,20</bounds>
+                <color>#FFFFFF</color>
+                <static text="TARGET WP %" />
+            </label>
+
+            <basicnumberc name="target_wp">
+                <bounds>270,104,90,28</bounds>
+            </basicnumberc>
+
+            <label name="alignment_label">
+                <bounds>24,144,230,20</bounds>
+                <color>#FFFFFF</color>
+                <static text="ALIGNMENT MODIFIER %" />
+            </label>
+
+            <basicnumberc name="alignment_modifier">
+                <bounds>270,140,90,28</bounds>
+            </basicnumberc>
+
+            <label name="alignment_hint">
+                <bounds>375,144,-24,20</bounds>
+                <color>#FFFFFF</color>
+                <static text="Chaos +20, Evil +10, Neutral 0, Good -10, Law -20" />
+            </label>
+
+            <label name="offer_label">
+                <bounds>24,180,230,20</bounds>
+                <color>#FFFFFF</color>
+                <static text="EXTRA 50% OF MINIMUM STEPS" />
+            </label>
+
+            <basicnumberc name="offer_increments">
+                <bounds>270,176,90,28</bounds>
+            </basicnumberc>
+
+            <label name="offer_hint">
+                <bounds>375,180,-24,20</bounds>
+                <color>#FFFFFF</color>
+                <static text="Each whole step adds +10%" />
+            </label>
+
+            <label name="other_label">
+                <bounds>24,216,230,20</bounds>
+                <color>#FFFFFF</color>
+                <static text="OTHER GM MODIFIER %" />
+            </label>
+
+            <basicnumberc name="other_modifier">
+                <bounds>270,212,90,28</bounds>
+            </basicnumberc>
+
+            <label name="other_hint">
+                <bounds>375,216,-24,38</bounds>
+                <color>#FFFFFF</color>
+                <static text="Use for other circumstances, e.g. different race -10 when applicable." />
+            </label>
+
+            <label name="formula_hint">
+                <bounds>24,262,-24,20</bounds>
+                <color>#FFFFFF</color>
+                <static text="Target = (100 - target WP) + Bribery + alignment + offer + other." />
+            </label>
+
+            <stringcontrol name="result_text">
+                <bounds>24,292,-24,48</bounds>
+                <font>sheettext</font>
+                <color>#FFFFFF</color>
+                <readonly />
+                <nodrag />
+                <nodragselect />
+            </stringcontrol>
+
+            <buttoncontrol name="calculate_button">
+                <bounds>-154,346,130,30</bounds>
+                <font>sheettext</font>
+                <color>#FFFFFF</color>
+
+                <hover>
+                    <frame name="fieldfocus" offset="3,2,3,2" />
+                </hover>
+
+                <script>
+                    function onButtonPress()
+                        window.handleCalculate()
+                    end
+                </script>
+            </buttoncontrol>
+
+        </sheetdata>
+
+    </windowclass>
+
+</root>
