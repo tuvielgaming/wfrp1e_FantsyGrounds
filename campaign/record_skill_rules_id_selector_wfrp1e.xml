@@ -13,10 +13,10 @@
         class. Do not use the rejected #10L createWindowWithClass path.
 
         UX:
-        - native draggable scrollbar targets the long choice list;
-        - choice rows are left-aligned string controls;
-        - CoreRPG fieldfocus state frame highlights the hovered row;
-        - the hand cursor makes the clickable row explicit.
+        - CoreRPG scrollbar_list provides the themed draggable list scrollbar;
+        - transient search scrolls to the first localized label / rulesId match;
+        - choice rows are left-aligned and highlight on hover;
+        - explicit X closes the transient popup without changing data.
     -->
 
     <windowclass name="wfrp1e_skill_rules_id_selector">
@@ -48,10 +48,30 @@
         <sheetdata>
 
             <label name="title">
-                <bounds>24,20,-24,22</bounds>
+                <bounds>24,20,-64,22</bounds>
                 <color>#FFFFFF</color>
                 <static textres="wfrp1e_skill_rules_id_select" />
             </label>
+
+            <buttoncontrol name="close_button">
+                <bounds>-54,16,30,28</bounds>
+                <font>sheettext</font>
+                <color>#FFFFFF</color>
+                <text>X</text>
+
+                <hover>
+                    <frame name="fieldfocus" offset="3,2,3,2" />
+                    <text>X</text>
+                </hover>
+
+                <tooltip text="Close" />
+
+                <script>
+                    function onButtonPress()
+                        window.close()
+                    end
+                </script>
+            </buttoncontrol>
 
             <label name="hint">
                 <bounds>24,48,-24,34</bounds>
@@ -59,8 +79,25 @@
                 <static textres="wfrp1e_skill_rules_id_select_hint" />
             </label>
 
+            <stringcontrol name="search">
+                <bounds>24,88,-34,28</bounds>
+                <font>sheettext</font>
+                <color>#FFFFFF</color>
+                <frame name="fieldfocus" offset="5,4,5,4" />
+                <empty text="Type Skill name or Rules ID to jump..." />
+                <nodrag />
+
+                <script>
+                    function onValueChanged()
+                        window.scrollToSearchMatch(
+                            getValue()
+                        )
+                    end
+                </script>
+            </stringcontrol>
+
             <windowlist name="choices">
-                <bounds>24,90,-48,-24</bounds>
+                <bounds>24,124,-24,-24</bounds>
                 <class>wfrp1e_skill_rules_id_choice</class>
 
                 <script>
@@ -70,24 +107,10 @@
                 </script>
             </windowlist>
 
-            <scrollbarcontrol name="choices_scrollbar">
-                <bounds>-42,90,18,-24</bounds>
-
-                <target>
-                    <name>choices</name>
-                </target>
-
-                <frame>
-                    <name>scrollbar_base</name>
-                </frame>
-
-                <normal>
-                    <name>scrollbutton_normal</name>
-                    <minimum>
-                        <height>40</height>
-                    </minimum>
-                </normal>
-            </scrollbarcontrol>
+            <scrollbar_list>
+                <anchored to="choices" />
+                <target>choices</target>
+            </scrollbar_list>
 
         </sheetdata>
 
