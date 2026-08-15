@@ -60,9 +60,12 @@ function setContext(nodeSourceSkill)
         nCreated = nCreated + 1
     end
 
-    for _, tDefinition
-        in ipairs(DataSkillsWFRP1E.getDefinitions())
-    do
+    local aDefinitions =
+        DataSkillsWFRP1E.getDefinitions()
+
+    for nIndex = 1, #aDefinitions do
+        local tDefinition = aDefinitions[nIndex]
+
         local sDisplay =
             DataSkillsWFRP1E.getDisplayText(
                 tDefinition.id
