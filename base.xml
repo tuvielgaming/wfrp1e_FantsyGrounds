@@ -19,6 +19,10 @@
         source="strings/strings_wfrp1e.xml"
     />
 
+    <includefile
+        source="strings/strings_skill_identities_wfrp1e.xml"
+    />
+
 
     <!-- WFRP1E graphic resources -->
 
