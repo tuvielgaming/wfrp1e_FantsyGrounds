@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+
+<root>
+
+    <!--
+        #10M transient Pick Lock context window
+
+        Lock Rating is runtime context for one Pick Lock test. This window is
+        intentionally unbound and creates no persistent database data.
+    -->
+
+    <windowclass name="wfrp1e_pick_lock_context">
+
+        <frame>utilitybox</frame>
+
+        <placement>
+            <size>
+                <width>470</width>
+                <height>245</height>
+            </size>
+        </placement>
+
+        <sizelimits>
+            <minimum>
+                <width>470</width>
+                <height>245</height>
+            </minimum>
+            <maximum>
+                <width>470</width>
+                <height>245</height>
+            </maximum>
+        </sizelimits>
+
+        <script
+            file="campaign/scripts/pick_lock_context_wfrp1e.lua"
+        />
+
+        <sheetdata>
+
+            <label name="title">
+                <bounds>24,22,-24,22</bounds>
+                <color>#FFFFFF</color>
+                <static text="PICK LOCK" />
+            </label>
+
+            <label name="hint">
+                <bounds>24,50,-24,20</bounds>
+                <color>#FFFFFF</color>
+                <static text="Enter the lock's Lock Rating (0-100%)." />
+            </label>
+
+            <label name="lock_rating_label">
+                <bounds>24,84,180,20</bounds>
+                <color>#FFFFFF</color>
+                <static text="LOCK RATING %" />
+            </label>
+
+            <basicnumberc name="lock_rating">
+                <bounds>210,80,90,28</bounds>
+            </basicnumberc>
+
+            <label name="formula_hint">
+                <bounds>24,122,-24,20</bounds>
+                <color>#FFFFFF</color>
+                <static text="Chance = Dexterity - Lock Rating + Pick Lock modifier." />
+            </label>
+
+            <label name="procedure_hint_1">
+                <bounds>24,148,-24,20</bounds>
+                <color>#FFFFFF</color>
+                <static text="One attempt takes one round / 10 seconds." />
+            </label>
+
+            <label name="procedure_hint_2">
+                <bounds>24,172,-24,20</bounds>
+                <color>#FFFFFF</color>
+                <static text="After 3 failed attempts on the same lock, further attempts fail automatically." />
+            </label>
+
+            <buttoncontrol name="roll_button">
+                <bounds>330,199,110,30</bounds>
+                <font>sheettext</font>
+                <color>#FFFFFF</color>
+
+                <script>
+                    function onButtonPress()
+                        window.handleRoll()
+                    end
+                </script>
+            </buttoncontrol>
+
+        </sheetdata>
+
+    </windowclass>
+
+</root>
