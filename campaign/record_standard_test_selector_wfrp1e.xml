@@ -22,7 +22,8 @@
         UX:
         - choice rows are left-aligned;
         - CoreRPG fieldfocus state frame highlights the hovered/pressed row;
-        - the hand cursor makes the clickable row explicit.
+        - the hand cursor makes the clickable row explicit;
+        - explicit X closes the transient popup without launching a roll.
     -->
 
     <windowclass name="wfrp1e_standard_test_selector">
@@ -168,10 +169,30 @@
         <sheetdata>
 
             <label name="title">
-                <bounds>24,22,-24,22</bounds>
+                <bounds>24,22,-64,22</bounds>
                 <color>#FFFFFF</color>
                 <static text="SELECT STANDARD TEST" />
             </label>
+
+            <buttoncontrol name="close_button">
+                <bounds>-54,16,30,28</bounds>
+                <font>sheettext</font>
+                <color>#FFFFFF</color>
+                <text>X</text>
+
+                <hover>
+                    <frame name="fieldfocus" offset="3,2,3,2" />
+                    <text>X</text>
+                </hover>
+
+                <tooltip text="Close" />
+
+                <script>
+                    function onButtonPress()
+                        window.close()
+                    end
+                </script>
+            </buttoncontrol>
 
             <label name="hint">
                 <bounds>24,48,-24,20</bounds>
