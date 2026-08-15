@@ -40,6 +40,11 @@
     />
 
     <script
+        name="DataSkillsWFRP1E"
+        file="scripts/data_skills_wfrp1e.lua"
+    />
+
+    <script
         name="DataStandardTestsWFRP1E"
         file="scripts/data_standard_tests_wfrp1e.lua"
     />
@@ -122,6 +127,10 @@
 
     <includefile
         source="campaign/record_pick_lock_context_wfrp1e.xml"
+    />
+
+    <includefile
+        source="campaign/record_skill_rules_id_selector_wfrp1e.xml"
     />
 
     <includefile
