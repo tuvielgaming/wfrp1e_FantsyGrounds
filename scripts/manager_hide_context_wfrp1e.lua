@@ -2,18 +2,28 @@
     WFRP1E
     Hide runtime-context preview resolver
 
-    Mechanics authority: WFRP 1e Core Rulebook, Hide / Ukrywanie sie.
+    Mechanics authority: WFRP 1e Core Rulebook, Hide / Ukrywanie sie and the
+    relevant Skill descriptions.
 
-    #10R resolves only the audited BASE chance:
+    Verified #10R BASE:
         Current Initiative + Current Cool - target Initiative
 
-    Against a group, the rule uses the highest Initiative in that group; the GM
-    supplies that value as runtime context.
+    Against a group, use the highest Initiative in that group; the GM supplies
+    that value as runtime context.
 
-    Deliberate exclusions for this checkpoint:
-        - no Silent Move +10 procedure modifier
-        - no Concealment up-to-+20 procedure modifier
-        - no other GM/situational modifiers
+    #10S adds ONE explicitly selected owned Skill effect:
+        Shadowing                       +10%
+        Concealment Rural / Urban       +20% stationary OR +5% cautious movement
+
+    Rural/Urban applicability remains a GM decision. Another owned Hide-related
+    Skill is never stacked automatically. A separate Other GM modifier remains
+    explicit runtime context.
+
+    Silent Move is deliberately NOT a Hide modifier here; its audited effects
+    belong to Listen/Sneak procedures.
+
+    Still excluded:
+        - no automatic Skill applicability or multi-Skill stacking
         - no dice roll
         - no persistent target/group data
         - no target clamp
@@ -25,6 +35,15 @@ local function failure(sReason)
         valid = false,
         reason = sReason
     }
+end
+
+
+local function normalizeId(sValue)
+    return tostring(
+        sValue or ""
+    ):match(
+        "^%s*(.-)%s*$"
+    )
 end
 
 
@@ -66,7 +85,62 @@ local function getCurrentCharacteristic(nodeChar, sCharacteristic)
 end
 
 
-function resolvePreview(nodeChar, tContext)
+local function resolveSelectedHideSkillModifier(sRulesId, tContext)
+    local sSkill = normalizeId(sRulesId)
+
+    if sSkill == "" then
+        return nil, "missing-skill-rules-id"
+    end
+
+    local tEffect =
+        DataStandardTestSkillEffectsWFRP1E.getEffect(
+            sSkill,
+            "hide"
+        )
+
+    if not tEffect then
+        return nil, "no-audited-hide-effect"
+    end
+
+    if tEffect.type == "fixed" then
+        return {
+            rulesId = sSkill,
+            effectType = "fixed",
+            modifier = tonumber(tEffect.value) or 0
+        }, nil
+    end
+
+    if tEffect.type == "choice" then
+        local sMode =
+            normalizeId(
+                tContext
+                and tContext.skillMode
+                or ""
+            )
+
+        local nModifier =
+            tEffect.choices
+            and tonumber(tEffect.choices[sMode])
+            or nil
+
+        if nModifier == nil then
+            return nil, "hide-skill-choice-required"
+        end
+
+        return {
+            rulesId = sSkill,
+            effectType = "choice",
+            mode = sMode,
+            condition = tEffect.condition,
+            modifier = nModifier
+        }, nil
+    end
+
+    return nil, "unsupported-hide-effect-type"
+end
+
+
+function resolvePreview(nodeChar, sRulesId, tContext)
     if not nodeChar then
         return failure("no-character")
     end
@@ -96,13 +170,41 @@ function resolvePreview(nodeChar, tContext)
         return failure("characteristic-unresolved")
     end
 
+    local tSkill, sSkillReason =
+        resolveSelectedHideSkillModifier(
+            sRulesId,
+            tContext
+        )
+
+    if not tSkill then
+        return failure(sSkillReason)
+    end
+
+    local nOtherModifier =
+        tonumber(tContext.otherModifier)
+        or 0
+
+    local nBaseTarget =
+        nInitiative
+        + nCool
+        - nTargetInitiative
+
     return {
         success = true,
         valid = true,
         testId = "hide",
+        rulesId = tSkill.rulesId,
+        effectType = tSkill.effectType,
+        skillMode = tSkill.mode,
+        skillCondition = tSkill.condition,
         initiative = nInitiative,
         cool = nCool,
         targetInitiative = nTargetInitiative,
-        baseTarget = nInitiative + nCool - nTargetInitiative
+        baseTarget = nBaseTarget,
+        skillModifier = tSkill.modifier,
+        otherModifier = nOtherModifier,
+        target = nBaseTarget
+            + tSkill.modifier
+            + nOtherModifier
     }
 end

@@ -3,11 +3,15 @@
 <root>
 
     <!--
-        #10R transient Hide context preview
+        #10S transient Hide context preview
 
         No persistent data. No roll.
-        The GM supplies the target's Initiative; for a group, use the highest
+        The GM supplies target Initiative; for a group, use the highest
         Initiative in that group.
+
+        One explicitly selected owned Skill contributes its audited Hide effect.
+        Concealment requires an explicit movement-state choice. Another owned
+        Hide-related Skill is never stacked automatically.
     -->
 
     <windowclass name="wfrp1e_hide_context">
@@ -16,19 +20,19 @@
 
         <placement>
             <size>
-                <width>610</width>
-                <height>300</height>
+                <width>700</width>
+                <height>450</height>
             </size>
         </placement>
 
         <sizelimits>
             <minimum>
-                <width>610</width>
-                <height>300</height>
+                <width>700</width>
+                <height>450</height>
             </minimum>
             <maximum>
-                <width>610</width>
-                <height>300</height>
+                <width>700</width>
+                <height>450</height>
             </maximum>
         </sizelimits>
 
@@ -71,27 +75,129 @@
             <label name="hint2">
                 <bounds>24,74,-24,38</bounds>
                 <color>#FFFFFF</color>
-                <static text="BASE preview only. Silent Move, Concealment and other GM/situational modifiers are not applied yet." />
+                <static text="Only the Skill row you explicitly used contributes here. Rural/Urban applicability remains a GM decision; other owned Skills are not auto-stacked." />
             </label>
 
             <label name="target_initiative_label">
-                <bounds>24,126,250,20</bounds>
+                <bounds>24,122,250,20</bounds>
                 <color>#FFFFFF</color>
                 <static text="TARGET INITIATIVE %" />
             </label>
 
             <basicnumberc name="target_initiative">
-                <bounds>290,122,100,28</bounds>
+                <bounds>290,118,100,28</bounds>
+            </basicnumberc>
+
+            <label name="selected_skill_label">
+                <bounds>24,158,250,20</bounds>
+                <color>#FFFFFF</color>
+                <static text="SELECTED SKILL" />
+            </label>
+
+            <stringcontrol name="selected_skill_value">
+                <bounds>290,154,-24,28</bounds>
+                <font>sheettext</font>
+                <color>#FFFFFF</color>
+                <readonly />
+                <nodrag />
+                <nodragselect />
+            </stringcontrol>
+
+            <label name="concealment_mode_label">
+                <bounds>24,194,250,20</bounds>
+                <color>#FFFFFF</color>
+                <static text="CONCEALMENT STATE" />
+                <invisible />
+            </label>
+
+            <stringcontrol name="stationary_choice">
+                <bounds>290,190,180,28</bounds>
+                <font>sheettext</font>
+                <color>#FFFFFF</color>
+                <readonly />
+                <nodrag />
+                <nodragselect />
+                <invisible />
+
+                <stateframe>
+                    <hover name="fieldfocus" offset="3,2,3,2" />
+                    <pressed name="fieldfocus" offset="3,2,3,2" />
+                </stateframe>
+
+                <cursor><hover>hand</hover></cursor>
+
+                <script>
+                    function onClickDown(button, x, y)
+                        if button == 1 then return true end
+                        return false
+                    end
+
+                    function onClickRelease(button, x, y)
+                        if button == 1 then
+                            window.setSkillMode("stationary")
+                            return true
+                        end
+                        return false
+                    end
+                </script>
+            </stringcontrol>
+
+            <stringcontrol name="cautious_choice">
+                <bounds>480,190,-24,28</bounds>
+                <font>sheettext</font>
+                <color>#FFFFFF</color>
+                <readonly />
+                <nodrag />
+                <nodragselect />
+                <invisible />
+
+                <stateframe>
+                    <hover name="fieldfocus" offset="3,2,3,2" />
+                    <pressed name="fieldfocus" offset="3,2,3,2" />
+                </stateframe>
+
+                <cursor><hover>hand</hover></cursor>
+
+                <script>
+                    function onClickDown(button, x, y)
+                        if button == 1 then return true end
+                        return false
+                    end
+
+                    function onClickRelease(button, x, y)
+                        if button == 1 then
+                            window.setSkillMode("cautiousMovement")
+                            return true
+                        end
+                        return false
+                    end
+                </script>
+            </stringcontrol>
+
+            <label name="other_modifier_label">
+                <bounds>24,230,250,20</bounds>
+                <color>#FFFFFF</color>
+                <static text="OTHER GM MODIFIER %" />
+            </label>
+
+            <basicnumberc name="other_modifier">
+                <bounds>290,226,100,28</bounds>
             </basicnumberc>
 
             <label name="formula_hint">
-                <bounds>24,166,-24,20</bounds>
+                <bounds>24,270,-24,20</bounds>
                 <color>#FFFFFF</color>
-                <static text="Base = Current Initiative + Current Cool - target Initiative." />
+                <static text="Target = (Current Initiative + Current Cool - target Initiative) + selected Skill effect + Other." />
+            </label>
+
+            <label name="procedure_hint">
+                <bounds>24,294,-24,20</bounds>
+                <color>#FFFFFF</color>
+                <static text="Shadowing = +10%. Concealment = +20% stationary or +5% cautious movement. Silent Move is not a Hide modifier." />
             </label>
 
             <stringcontrol name="result_line_1">
-                <bounds>24,202,-24,22</bounds>
+                <bounds>24,326,-24,22</bounds>
                 <font>sheettext</font>
                 <color>#FFFFFF</color>
                 <readonly />
@@ -100,7 +206,16 @@
             </stringcontrol>
 
             <stringcontrol name="result_line_2">
-                <bounds>24,230,-180,26</bounds>
+                <bounds>24,352,-24,22</bounds>
+                <font>sheettext</font>
+                <color>#FFFFFF</color>
+                <readonly />
+                <nodrag />
+                <nodragselect />
+            </stringcontrol>
+
+            <stringcontrol name="result_line_3">
+                <bounds>24,378,-180,26</bounds>
                 <font>sheetlabel</font>
                 <color>#FFFFFF</color>
                 <readonly />
@@ -109,7 +224,7 @@
             </stringcontrol>
 
             <buttoncontrol name="calculate_button">
-                <bounds>-154,252,130,30</bounds>
+                <bounds>-154,400,130,30</bounds>
                 <font>sheettext</font>
                 <color>#FFFFFF</color>
 
