@@ -24,6 +24,10 @@
     #10P adds one explicit ambiguous context route for Bribery. Bribe remains
     context-required, while Gossip/Loyalty may still be offered as BASE-only
     tests because Bribery has no audited numeric effect for those tests.
+
+    #10R adds a BASE-only Hide context preview. The GM supplies target
+    Initiative (highest Initiative when hiding from a group). Silent Move,
+    Concealment and other situational modifiers remain deliberately separate.
 ]]
 
 local function getCharacterNode()
@@ -144,6 +148,13 @@ local function hasBribeContextCandidate(
     end
 
     return false
+end
+
+
+local function isHideContextCandidate(aPotentialTests)
+    return
+        #aPotentialTests == 1
+        and aPotentialTests[1] == "hide"
 end
 
 
@@ -299,6 +310,14 @@ local function addRollActionDiagnostic(
     aPotentialTests,
     aLines
 )
+    if isHideContextCandidate(aPotentialTests) then
+        table.insert(
+            aLines,
+            "Ctrl+Double-click: Enter target Initiative and preview hide BASE"
+        )
+        return
+    end
+
     if #aPotentialTests == 1 then
         if sRulesId == "pickLock"
             and aPotentialTests[1] == "pickLock"
@@ -621,6 +640,24 @@ local function openPickLockContext(
 end
 
 
+local function openHideContext(nodeChar)
+    local wContext =
+        Interface.openWindow(
+            "wfrp1e_hide_context",
+            ""
+        )
+
+    if not wContext
+        or not wContext.setContext
+    then
+        return false
+    end
+
+    wContext.setContext(nodeChar)
+    return true
+end
+
+
 function handleBaseTestDoubleClick()
     if not Input.isControlPressed() then
         return false
@@ -645,6 +682,10 @@ function handleBaseTestDoubleClick()
         DataStandardTestsWFRP1E.getPotentialStandardTestsForSkill(
             sRulesId
         )
+
+    if isHideContextCandidate(aPotentialTests) then
+        return openHideContext(nodeChar)
+    end
 
     if sRulesId == "pickLock"
         and #aPotentialTests == 1
