@@ -1,6 +1,6 @@
 # WFRP1E Fantasy Grounds — AI Resume Context
 
-Last updated: 2026-08-15 12:44 Europe/Warsaw
+Last updated: 2026-08-15 14:42 Europe/Warsaw
 
 This is the single authoritative resume/checkpoint file for the Fantasy Grounds WFRP 1e project. Update this file in place; do not create overlapping context documents.
 
@@ -103,7 +103,6 @@ Frozen characteristic header UX (#9F):
 
 ## 3. Skills / Career Skills — verified model
 
-### Skill record / ownership / Career progression
 Persistent campaign/reference Skill fields:
 - `name`
 - stable language-neutral `rulesId`
@@ -128,7 +127,7 @@ Career Skills:
 - successful purchase creates a normal owned acquisition;
 - Skill purchases share the Character advancement transaction/refund accounting.
 
-## 4. Repeated acquisition / Standard Tests — verified through #10N
+## 4. Repeated acquisition / Standard Tests — verified through #10P
 
 ### Repeated acquisition
 Derived acquisition count groups owned rows by stable `rulesId`; no persisted rank.
@@ -228,47 +227,80 @@ Rulebook-audited:
 
 Implementation:
 - `bribery -> bribe -> fixed +20`;
-- no manager/UI change;
-- Bribe still context-required and does not roll yet.
+- no generic Skill modifier rule.
 
 #10N merge:
 `0a1036f158c9e980d27ce1aec31fc72437d077d5`
 
-## 5. Skill identity selector / popup UX (#10O PASS)
-
+### Skill Rules ID selector / popup UX (#10O)
 English Core Rulebook printed p.45 `INDEX TO THE SKILLS` provides 133 canonical English core Skill identities for creation UI.
 
 Identity rules:
 - stored `rulesId` remains stable/language-neutral;
 - displayed identity label comes from string resources;
 - future localization changes presentation only;
-- established Foundry IDs are preserved where already used;
+- established Foundry IDs preserved where already used;
 - compatibility exception: display `Jest`, persist `jester`;
-- unknown/custom existing rulesIds are preserved unless explicitly changed;
-- Unlinked clears the stored ID.
+- unknown/custom existing rulesIds preserved unless explicitly changed;
+- Unlinked clears stored ID.
 
 Verified Skill-record UX:
-- raw editable Rules ID text field replaced with localization-ready selector display;
-- selector is transient/unbound and persists only the selected source Skill `rulesId`;
+- raw Rules ID text field replaced with localization-ready selector;
+- transient/unbound selector persists only selected source Skill `rulesId`;
 - Unlinked + all 133 core English Skills;
 - left-aligned rows;
 - hover/pressed row highlight + hand cursor;
-- CoreRPG `scrollbar_list` gives visible draggable scrollbar on the long Rules ID list;
-- search field at top accepts localized label or stable rulesId and scrolls to first match as user types;
+- CoreRPG `scrollbar_list` on long Rules ID list;
+- search field accepts localized label or stable rulesId and scrolls to first match;
 - explicit top-right X closes without changing data;
-- older Standard Test selector received matching left-aligned/hover-highlighted rows and X close control; no mechanics changed.
+- Standard Test selector received matching left-aligned/hover rows and X close control.
 
-FGU-specific lessons from #10O:
-- avoid eager top-level Lua initialization that calls helpers such as `ipairs` in a global package script; FGU raised `attempt to call global 'ipairs' (a nil value)` during `DataSkillsWFRP1E` initialization;
-- because package init failed, downstream calls such as `getDisplayText()` were nil; root fix was to remove eager lookup-table construction and use lazy numeric-index lookup;
-- selector population also avoids `ipairs` for the same runtime-safety reason;
+FGU-specific #10O lesson:
+- avoid eager top-level Lua initialization calling helpers such as `ipairs` in a global package script; FGU raised `attempt to call global 'ipairs' (a nil value)` during `DataSkillsWFRP1E` initialization;
+- root fix: lazy numeric-index lookup and no eager derived table construction;
+- selector population also avoids `ipairs` for the same package/runtime-safety reason;
 - use statically declared unbound list child class + `createWindow(nil)`; do not reuse rejected #10L `createWindowWithClass(...)` path.
 
-PR #13:
-- verified head `855879c0e42a9ba25e005236331fbfd18088fa67`
-- merge `6b1a5c0facb31125d9779547f7343a359d31e20e`
+#10O merge:
+`6b1a5c0facb31125d9779547f7343a359d31e20e`
 
-## 6. Verified checkpoint history
+### Bribe runtime-context preview (#10P PASS)
+Rulebook-audited Bribe procedure boundary:
+- base = `100 - target WP`;
+- Bribery adds verified +20%;
+- alignment modifier: Chaos +20, Evil +10, Neutral 0, Good -10, Law -20;
+- every additional 50% of the original minimum acceptable bribe adds +10%;
+- GM may add other circumstance modifiers;
+- GM establishes the minimum acceptable bribe externally and the offered bribe may not be below it.
+
+Verified implementation:
+- Ctrl+Double-click owned Bribery now opens the Standard Test selector even though Bribe is context-required;
+- selector shows all three candidates: Bribe, Gossip, Loyalty;
+- Bribe opens transient `BRIBE CONTEXT` preview;
+- Gossip/Loyalty are clearly BASE-only from Bribery because Bribery +20 applies only to Bribe;
+- transient inputs: target WP, alignment modifier, count of extra 50%-of-minimum steps, Other GM modifier;
+- Bribery +20 is resolved through the existing audited Skill-effect resolver;
+- preview calculates final target only; no dice roll in #10P;
+- no target clamp;
+- invalid target WP/alignment/offer-step inputs are rejected;
+- no Character/Skill/Career/XP persistence;
+- X closes without side effects.
+
+Verified examples:
+- WP 40, alignment 0, offer steps 0, other 0 => 80%;
+- WP 40, alignment +10, offer steps 2, other -10 => 100%;
+- WP 70, alignment -20, offer steps 0, other 0 => 30%.
+
+Final popup presentation:
+- do not use one long result string; it clipped in FGU;
+- result is split into readable lines for base/Skill, procedure modifiers, and separate FINAL TARGET;
+- long hint text also split to avoid clipping.
+
+PR #14:
+- verified head `a315bdb1c76ba5c3253f062f92b01d37595b6e3f`
+- merge `afdc9b978fac9f8cd24cccbb968aaceaca42daec`
+
+## 5. Verified checkpoint history
 
 - #1–#9F Character/Career/XP foundation and advancement UX — PASS
 - #10A Skill record — PASS
@@ -286,14 +318,15 @@ PR #13:
 - #10M Pick Lock Lock-Rating context — PASS
 - #10N Bribery +20 Skill effect — PASS
 - #10O Skill Rules ID selector + popup UX — PASS
+- #10P Bribe runtime-context preview — PASS
 
 Rejected experiment:
 - #9C.1 full-window focus-overlay attempts — removed; do not retry.
 
-## 7. Current verified baseline
+## 6. Current verified baseline
 
-Current verified mechanics/UI merge after #10O:
-- `6b1a5c0facb31125d9779547f7343a359d31e20e`
+Current verified mechanics/UI merge after #10P:
+- `afdc9b978fac9f8cd24cccbb968aaceaca42daec`
 
 Context updates are metadata-only and may make `main` newer than the verified merge.
 
@@ -305,22 +338,24 @@ Important current files include:
 - `scripts/data_standard_tests_wfrp1e.lua`
 - `scripts/data_standard_test_skill_effects_wfrp1e.lua`
 - `scripts/manager_standard_test_wfrp1e.lua`
+- `scripts/manager_bribe_context_wfrp1e.lua`
 - `campaign/record_skill_wfrp1e.xml`
 - `campaign/record_skill_rules_id_selector_wfrp1e.xml`
 - `campaign/record_standard_test_selector_wfrp1e.xml`
 - `campaign/record_pick_lock_context_wfrp1e.xml`
-- `campaign/scripts/skill_main_wfrp1e.lua`
-- `campaign/scripts/skill_rules_id_selector_wfrp1e.lua`
+- `campaign/record_bribe_context_wfrp1e.xml`
+- `campaign/scripts/bribe_context_wfrp1e.lua`
 - `campaign/scripts/char_skill_wfrp1e.lua`
 - Character/Career/Experience/Advancement managers.
 
-## 8. Next checkpoint
+## 7. Next checkpoint
 
-#10P is NOT frozen yet.
+#10Q is NOT frozen yet.
 
-Return to mechanics after the user-prioritized #10O UI detour.
-Natural next dependency from the earlier source audit:
-- explicit Bribe target-WP runtime context for the existing `100 - target.wp` named Standard Test;
-- reuse verified #10N Bribery +20 effect and existing transient context/roll architecture;
-- audit the Bribe procedure's separate situational modifiers before implementing;
-- do not conflate target-WP context, Bribery Skill bonus, and procedure/situational modifiers.
+Natural next dependency:
+- make the now-verified Bribe context executable through the existing percentile roll engine;
+- reuse the exact #10P preview calculation rather than reimplementing Bribe arithmetic in the roll layer;
+- preserve explicit breakdown in chat (base, Bribery +20, alignment, offer, other, final target);
+- no target clamp;
+- no persistence;
+- do not add new Bribe rules beyond the already-audited #10P procedure boundary.
