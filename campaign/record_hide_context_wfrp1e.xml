@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+
+<root>
+
+    <!--
+        #10R transient Hide context preview
+
+        No persistent data. No roll.
+        The GM supplies the target's Initiative; for a group, use the highest
+        Initiative in that group.
+    -->
+
+    <windowclass name="wfrp1e_hide_context">
+
+        <frame>utilitybox</frame>
+
+        <placement>
+            <size>
+                <width>610</width>
+                <height>300</height>
+            </size>
+        </placement>
+
+        <sizelimits>
+            <minimum>
+                <width>610</width>
+                <height>300</height>
+            </minimum>
+            <maximum>
+                <width>610</width>
+                <height>300</height>
+            </maximum>
+        </sizelimits>
+
+        <script file="campaign/scripts/hide_context_wfrp1e.lua" />
+
+        <sheetdata>
+
+            <label name="title">
+                <bounds>24,20,-64,22</bounds>
+                <color>#FFFFFF</color>
+                <static text="HIDE CONTEXT" />
+            </label>
+
+            <buttoncontrol name="close_button">
+                <bounds>-54,16,30,28</bounds>
+                <font>sheettext</font>
+                <color>#FFFFFF</color>
+                <text>X</text>
+
+                <hover>
+                    <frame name="fieldfocus" offset="3,2,3,2" />
+                    <text>X</text>
+                </hover>
+
+                <tooltip text="Close" />
+
+                <script>
+                    function onButtonPress()
+                        window.close()
+                    end
+                </script>
+            </buttoncontrol>
+
+            <label name="hint1">
+                <bounds>24,50,-24,20</bounds>
+                <color>#FFFFFF</color>
+                <static text="Enter the Initiative of the creature being avoided; for a group use the highest Initiative." />
+            </label>
+
+            <label name="hint2">
+                <bounds>24,74,-24,38</bounds>
+                <color>#FFFFFF</color>
+                <static text="BASE preview only. Silent Move, Concealment and other GM/situational modifiers are not applied yet." />
+            </label>
+
+            <label name="target_initiative_label">
+                <bounds>24,126,250,20</bounds>
+                <color>#FFFFFF</color>
+                <static text="TARGET INITIATIVE %" />
+            </label>
+
+            <basicnumberc name="target_initiative">
+                <bounds>290,122,100,28</bounds>
+            </basicnumberc>
+
+            <label name="formula_hint">
+                <bounds>24,166,-24,20</bounds>
+                <color>#FFFFFF</color>
+                <static text="Base = Current Initiative + Current Cool - target Initiative." />
+            </label>
+
+            <stringcontrol name="result_line_1">
+                <bounds>24,202,-24,22</bounds>
+                <font>sheettext</font>
+                <color>#FFFFFF</color>
+                <readonly />
+                <nodrag />
+                <nodragselect />
+            </stringcontrol>
+
+            <stringcontrol name="result_line_2">
+                <bounds>24,230,-180,26</bounds>
+                <font>sheetlabel</font>
+                <color>#FFFFFF</color>
+                <readonly />
+                <nodrag />
+                <nodragselect />
+            </stringcontrol>
+
+            <buttoncontrol name="calculate_button">
+                <bounds>-154,252,130,30</bounds>
+                <font>sheettext</font>
+                <color>#FFFFFF</color>
+
+                <hover>
+                    <frame name="fieldfocus" offset="3,2,3,2" />
+                </hover>
+
+                <script>
+                    function onButtonPress()
+                        window.handleCalculate()
+                    end
+                </script>
+            </buttoncontrol>
+
+        </sheetdata>
+
+    </windowclass>
+
+</root>
