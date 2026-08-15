@@ -12,6 +12,11 @@
     Compatibility note:
         The rulebook display name "Jest" retains the established mechanical
         identity "jester" used by the read-only Foundry reference.
+
+    FGU runtime note:
+        Keep package load declarative. Do not eagerly build a derived lookup
+        table with Lua iterator helpers at file scope; resolve the small static
+        registry lazily when API functions are called.
 ]]
 
 local tDefinitions = {
@@ -150,31 +155,39 @@ local tDefinitions = {
     { id = "wrestling", textres = "wfrp1e_skill_identity_wrestling" },
 }
 
-local tById = {}
-for _, tDefinition in ipairs(tDefinitions) do
-    tById[tDefinition.id] = tDefinition
-end
-
 local function normalizeId(sValue)
     return tostring(sValue or ""):match("^%s*(.-)%s*$")
 end
 
+local function findDefinition(sRulesId)
+    local sId = normalizeId(sRulesId)
+
+    for nIndex = 1, #tDefinitions do
+        local tDefinition = tDefinitions[nIndex]
+        if tDefinition.id == sId then
+            return tDefinition
+        end
+    end
+
+    return nil
+end
+
 function getDefinitions()
     local aResult = {}
-    for _, tDefinition in ipairs(tDefinitions) do
-        table.insert(
-            aResult,
-            {
-                id = tDefinition.id,
-                textres = tDefinition.textres
-            }
-        )
+
+    for nIndex = 1, #tDefinitions do
+        local tDefinition = tDefinitions[nIndex]
+        aResult[nIndex] = {
+            id = tDefinition.id,
+            textres = tDefinition.textres
+        }
     end
+
     return aResult
 end
 
 function getDefinition(sRulesId)
-    local tDefinition = tById[normalizeId(sRulesId)]
+    local tDefinition = findDefinition(sRulesId)
     if not tDefinition then
         return nil
     end
@@ -186,7 +199,7 @@ function getDefinition(sRulesId)
 end
 
 function isCanonicalRulesId(sRulesId)
-    return tById[normalizeId(sRulesId)] ~= nil
+    return findDefinition(sRulesId) ~= nil
 end
 
 function getDisplayLabel(sRulesId)
@@ -196,7 +209,7 @@ function getDisplayLabel(sRulesId)
         return Interface.getString("wfrp1e_skill_rules_id_unlinked")
     end
 
-    local tDefinition = tById[sId]
+    local tDefinition = findDefinition(sId)
     if tDefinition then
         local sLabel = Interface.getString(tDefinition.textres)
         if sLabel ~= "" then
