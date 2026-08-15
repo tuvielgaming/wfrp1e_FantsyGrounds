@@ -7,6 +7,7 @@
     localization without changing the stable mechanical ID.
 ]]
 
+local sSkillPath = nil
 local sRulesIdPath = nil
 
 local function getSkillNode()
@@ -92,11 +93,22 @@ function onInit()
     local nodeSkill = getSkillNode()
 
     if nodeSkill then
+        sSkillPath =
+            DB.getPath(
+                nodeSkill
+            )
+
         sRulesIdPath =
             DB.getPath(
                 nodeSkill,
                 "rulesId"
             )
+
+        DB.addHandler(
+            sSkillPath,
+            "onChildAdded",
+            refreshRulesIdDisplay
+        )
 
         DB.addHandler(
             sRulesIdPath,
@@ -109,15 +121,23 @@ function onInit()
 end
 
 function onClose()
-    if not sRulesIdPath then
-        return
+    if sSkillPath then
+        DB.removeHandler(
+            sSkillPath,
+            "onChildAdded",
+            refreshRulesIdDisplay
+        )
+
+        sSkillPath = nil
     end
 
-    DB.removeHandler(
-        sRulesIdPath,
-        "onUpdate",
-        refreshRulesIdDisplay
-    )
+    if sRulesIdPath then
+        DB.removeHandler(
+            sRulesIdPath,
+            "onUpdate",
+            refreshRulesIdDisplay
+        )
 
-    sRulesIdPath = nil
+        sRulesIdPath = nil
+    end
 end
