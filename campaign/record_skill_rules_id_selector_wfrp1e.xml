@@ -11,6 +11,12 @@
         IMPORTANT:
         Use windowlist.createWindow(nil) with the statically declared child
         class. Do not use the rejected #10L createWindowWithClass path.
+
+        UX:
+        - native draggable scrollbar targets the long choice list;
+        - choice rows are left-aligned string controls;
+        - CoreRPG fieldfocus state frame highlights the hovered row;
+        - the hand cursor makes the clickable row explicit.
     -->
 
     <windowclass name="wfrp1e_skill_rules_id_selector">
@@ -54,7 +60,7 @@
             </label>
 
             <windowlist name="choices">
-                <bounds>24,90,-24,-24</bounds>
+                <bounds>24,90,-48,-24</bounds>
                 <class>wfrp1e_skill_rules_id_choice</class>
 
                 <script>
@@ -63,6 +69,25 @@
                     end
                 </script>
             </windowlist>
+
+            <scrollbarcontrol name="choices_scrollbar">
+                <bounds>-42,90,18,-24</bounds>
+
+                <target>
+                    <name>choices</name>
+                </target>
+
+                <frame>
+                    <name>scrollbar_base</name>
+                </frame>
+
+                <normal>
+                    <name>scrollbutton_normal</name>
+                    <minimum>
+                        <height>40</height>
+                    </minimum>
+                </normal>
+            </scrollbarcontrol>
 
         </sheetdata>
 
@@ -82,12 +107,7 @@
 
             function setChoice(sRulesId, sDisplay)
                 sChoiceRulesId = tostring(sRulesId or "")
-
-                choice.setText(
-                    tostring(sDisplay or ""),
-                    tostring(sDisplay or ""),
-                    tostring(sDisplay or "")
-                )
+                choice.setValue(tostring(sDisplay or ""))
             end
 
             function handleChoice()
@@ -103,17 +123,42 @@
 
         <sheetdata>
 
-            <buttoncontrol name="choice">
-                <bounds>0,0,-1,26</bounds>
+            <stringcontrol name="choice">
+                <bounds>4,0,-4,26</bounds>
                 <font>sheettext</font>
                 <color>#FFFFFF</color>
+                <readonly />
+                <nodrag />
+                <nodragselect />
+
+                <stateframe>
+                    <hover name="fieldfocus" offset="3,2,3,2" />
+                    <pressed name="fieldfocus" offset="3,2,3,2" />
+                </stateframe>
+
+                <cursor>
+                    <hover>hand</hover>
+                </cursor>
 
                 <script>
-                    function onButtonPress()
-                        window.handleChoice()
+                    function onClickDown(button, x, y)
+                        if button == 1 then
+                            return true
+                        end
+
+                        return false
+                    end
+
+                    function onClickRelease(button, x, y)
+                        if button == 1 then
+                            window.handleChoice()
+                            return true
+                        end
+
+                        return false
                     end
                 </script>
-            </buttoncontrol>
+            </stringcontrol>
 
         </sheetdata>
 
