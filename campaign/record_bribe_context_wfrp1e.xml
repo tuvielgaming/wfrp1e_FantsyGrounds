@@ -3,9 +3,10 @@
 <root>
 
     <!--
-        #10P transient Bribe context preview
+        #10Q transient Bribe context
 
-        No persistent data. No roll.
+        #10P preview remains available. #10Q adds explicit dice execution from
+        the same validated transient inputs. No persistent data is created.
         The GM establishes the minimum acceptable bribe externally.
     -->
 
@@ -70,7 +71,7 @@
             <label name="hint2">
                 <bounds>24,70,-24,20</bounds>
                 <color>#FFFFFF</color>
-                <static text="This checkpoint previews the final percentage only; it does not roll dice." />
+                <static text="CALCULATE previews the final target; ROLL executes that same calculation." />
             </label>
 
             <label name="target_wp_label">
@@ -175,6 +176,22 @@
                 <nodrag />
                 <nodragselect />
             </stringcontrol>
+
+            <buttoncontrol name="roll_button">
+                <bounds>-294,392,130,30</bounds>
+                <font>sheettext</font>
+                <color>#FFFFFF</color>
+
+                <hover>
+                    <frame name="fieldfocus" offset="3,2,3,2" />
+                </hover>
+
+                <script>
+                    function onButtonPress()
+                        window.handleRoll()
+                    end
+                </script>
+            </buttoncontrol>
 
             <buttoncontrol name="calculate_button">
                 <bounds>-154,392,130,30</bounds>
