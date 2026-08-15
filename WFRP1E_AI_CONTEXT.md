@@ -1,6 +1,6 @@
 # WFRP1E Fantasy Grounds — AI Resume Context
 
-Last updated: 2026-08-15 15:56 Europe/Warsaw
+Last updated: 2026-08-15 18:06 Europe/Warsaw
 
 This is the single authoritative resume/checkpoint file for the Fantasy Grounds WFRP 1e project. Update this file in place; do not create overlapping context documents.
 
@@ -122,7 +122,7 @@ Rules ID selector (#10O):
 
 FGU #10O lesson: avoid eager top-level Lua package initialization using helpers such as `ipairs`; FGU produced `attempt to call global 'ipairs' (a nil value)`. Use lazy lookup/population. Do not reuse rejected #10L dynamic `windowlist.createWindowWithClass(...)` path.
 
-## 4. Standard Tests — verified through #10R
+## 4. Standard Tests — verified through #10S
 
 ### Repeated acquisition
 Derived acquisition count groups owned Skills by stable `rulesId`; no persisted rank.
@@ -153,7 +153,7 @@ CRITICAL FGU percentile construction:
 
 ### Selected Skill modifiers
 There is NO universal `owned Skill = +10%` rule.
-Audited examples:
+Audited examples include:
 - Charm +10 Bargain/Bluff/Gossip;
 - Haggle +10 Bargain;
 - Immunity to Disease +10 Disease;
@@ -162,11 +162,14 @@ Audited examples:
 - Pick Lock / Pick Pocket repeated-acquisition modifier;
 - Super Numerate +20 Estimate, +10 Gamble;
 - Wit +10 Bluff/Gossip;
-- Bribery +20 Bribe.
+- Bribery +20 Bribe;
+- Shadowing +10 Hide;
+- Concealment Rural/Urban Hide effect is choice-based: +20 stationary or +5 cautious movement.
 
+Generic selected-Skill target remains:
 `final target = resolved base + explicitly selected Skill modifier`
 
-No automatic Skill choice, invented clamping, or generic situational stack. Pick Pocket's separate unskilled -30 path is still not implemented.
+The generic Standard Test manager still handles only its verified fixed/repeated numeric effect contract. Choice-based Hide Concealment effects are resolved in the Hide-specific context manager. No automatic Skill choice, invented clamping, or generic situational stack. Pick Pocket's separate unskilled -30 path is still not implemented.
 
 ### Explicit Standard Test selector (#10L)
 Ambiguous locally rollable Skills use Ctrl+Double-click selector rather than auto-choice. Charm with Fel 42 => Bargain/Bluff/Gossip 52 with Charm +10.
@@ -214,31 +217,55 @@ Verified implementation:
 #10Q merge:
 `0b774c1492d44db1d9618da55754e603f7d5815d`
 
-### Hide base context (#10R PASS)
-Rulebook-audited Hide base:
+### Hide (#10R–#10S PASS)
+Rulebook-audited base:
 `Current Initiative + Current Cool - target Initiative`
 
 Against a group, use the highest Initiative in that group.
-Separate procedure modifiers exist: appropriate Silent Move may add +10, Concealment may add up to +20, plus GM situational modifiers. These are NOT automated in #10R.
 
-Verified #10R implementation:
-- owned `concealmentRural`, `concealmentUrban`, or `shadowing` has sole candidate `hide` and Ctrl+Double-click opens transient HIDE CONTEXT;
-- target Initiative supplied manually; no target/group persistence;
-- CALCULATE previews BASE only; no dice;
-- no clamp;
-- popup explicitly states Silent Move/Concealment/other modifiers are not applied yet;
+Important audited correction:
+- Silent Move is NOT a Hide modifier; its audited effects belong to Listen/Sneak;
+- Shadowing contributes +10% to Hide;
+- appropriate Concealment Rural/Urban contributes +20% while stationary OR +5% while moving cautiously;
+- Rural/Urban applicability remains a GM decision;
+- Other GM modifier is a separate explicit input;
+- another owned Hide-related Skill is not auto-stacked.
+
+Verified #10S implementation:
+- exact clicked owned Skill `rulesId` is passed into transient HIDE CONTEXT;
+- Shadowing automatically contributes +10%;
+- Concealment Rural/Urban requires explicit Stationary +20 or Cautious Movement +5 choice;
+- only the explicitly used Skill row contributes;
+- Other GM modifier can be added separately;
+- no target clamp;
+- preview only: NO dice yet;
+- no Character/Skill/Career/XP persistence;
 - X closes without side effects.
 
-Verified examples with I 35 / Cl 24:
-- target I 40 => 19%;
-- target I 20 => 39%;
-- target I 70 => -11%.
+Verified example with I 35 / Cl 24 / target I 40:
+- BASE = 19%;
+- Shadowing +10, Other 0 => 29%;
+- Concealment Stationary +20 => 39%;
+- Concealment Cautious +5 => 24%;
+- Cautious +5 and Other +10 => 34%.
 
-#10R verified head:
-`50b054a64c24f14b1b94f8b056fb031245dbb5ad`
+If Character owns both Shadowing and Concealment, opening from Shadowing uses only +10; opening from Concealment uses only the selected +20/+5. No automatic +30/+15 stack.
 
-#10R merge:
-`fcb15c82c99975af711a49f6a54c42eb4c1cb442`
+#10S verified head:
+`ab5356bb1ef90f1876a3d4c040301a889ed335e1`
+
+#10S merge:
+`3894a24e72330354c74aef908905b8191dffc3a3`
+
+### Popup UX direction
+Verified popup UX already includes readable dark-frame text, hover-highlight rows, explicit X close on selectors, and search/scroll on the long Rules ID selector.
+
+User's next requested UX improvement:
+- mutually exclusive choices should visibly look like radio controls BEFORE validation;
+- use explicit empty/selected markers such as `○` / `●` at the start of each choice rather than only a `>` prefix;
+- Hide Concealment Stationary/Cautious is the first concrete case;
+- apply the same visual convention to future comparable single-choice popup options where appropriate;
+- this is presentation/interaction affordance only, not a mechanics or persistence change.
 
 ## 5. Verified checkpoint history
 
@@ -261,14 +288,17 @@ Verified examples with I 35 / Cl 24:
 - #10P Bribe runtime-context preview — PASS
 - #10Q executable Bribe roll — PASS
 - #10R Hide target-Initiative BASE preview — PASS
+- #10S Hide selected-Skill modifier preview — PASS
 
-Rejected experiment:
+Rejected experiments / lessons:
 - #9C.1 full-window focus-overlay attempts — removed; do not retry.
+- #10L dynamic unbound `windowlist.createWindowWithClass(...)` — rejected by FGU runtime.
+- do not put raw `<` Lua comparisons inside XML script text.
 
 ## 6. Current verified baseline
 
-Current verified mechanics/UI merge after #10R:
-- `fcb15c82c99975af711a49f6a54c42eb4c1cb442`
+Current verified mechanics/UI merge after #10S:
+- `3894a24e72330354c74aef908905b8191dffc3a3`
 
 Context updates are metadata-only and may make `main` newer than the verified merge.
 
@@ -290,6 +320,15 @@ Important current files include:
 
 ## 7. Next checkpoint
 
-#10S is NOT frozen yet.
+#10T — NOT IMPLEMENTED / NOT FROZEN.
 
-Do a fresh source audit before implementation. Natural next dependency is Hide procedure modifiers/execution, but preserve the rule distinction: Silent Move, Concealment and GM circumstances are separate inputs/effects and must not be collapsed into one generic selected-Skill modifier. Prefer another preview/resolver checkpoint before dice if the complete Hide procedure contract is not yet independently verified.
+Resume intent:
+- UI-only polish for mutually exclusive popup choices;
+- first case: HIDE CONTEXT Concealment state;
+- replace the current weak textual selection affordance with explicit radio-button-style markers (`○` unselected, `●` selected) at the beginning of each option;
+- retain hover highlighting and existing click behavior;
+- preserve validation when no option is selected;
+- consider applying the same visual convention to other/future mutually exclusive popup choices, but do not broaden mechanics;
+- no calculation, dice, persistence, Character, Career, XP, or Skill-effect changes.
+
+After #10T is separately verified, return to Hide execution (natural next mechanics dependency: roll the already-verified #10S final Hide target through the existing d100 engine).
