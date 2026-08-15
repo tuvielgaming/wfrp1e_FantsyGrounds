@@ -11,13 +11,18 @@
         in the audited Standard Test registry.
 
         Only tests whose #10K selected-Skill final target resolves locally are
-        presented. Selecting a button calls the already-verified #10K
-        executable roll path; no new mechanics are implemented here.
+        presented. Selecting a row calls the already-verified #10K executable
+        roll path; no new mechanics are implemented here.
 
         The current audited registry never produces more than three locally
-        rollable choices for one owned Skill. Fixed buttons are used here on
+        rollable choices for one owned Skill. Fixed rows are used here on
         purpose instead of dynamically created unbound windowlist children;
         this avoids any database/windowclass side effects in a transient dialog.
+
+        UX:
+        - choice rows are left-aligned;
+        - CoreRPG fieldfocus state frame highlights the hovered/pressed row;
+        - the hand cursor makes the clickable row explicit.
     -->
 
     <windowclass name="wfrp1e_standard_test_selector">
@@ -62,7 +67,7 @@
                 nIndex
             )
                 aChoiceTestIds[nIndex] = nil
-                control.setText("", "", "")
+                control.setValue("")
                 control.setVisible(false)
             end
 
@@ -84,12 +89,7 @@
                     .. signedModifier(tTarget.skillModifier)
                     .. "%)"
 
-                control.setText(
-                    sText,
-                    sText,
-                    sText
-                )
-
+                control.setValue(sText)
                 control.setVisible(true)
             end
 
@@ -179,44 +179,119 @@
                 <static text="Choose the named test for this Skill." />
             </label>
 
-            <buttoncontrol name="choice1">
+            <stringcontrol name="choice1">
                 <bounds>24,82,-24,30</bounds>
                 <font>sheettext</font>
                 <color>#FFFFFF</color>
+                <readonly />
+                <nodrag />
+                <nodragselect />
                 <invisible />
 
+                <stateframe>
+                    <hover name="fieldfocus" offset="3,2,3,2" />
+                    <pressed name="fieldfocus" offset="3,2,3,2" />
+                </stateframe>
+
+                <cursor>
+                    <hover>hand</hover>
+                </cursor>
+
                 <script>
-                    function onButtonPress()
-                        window.handleChoice(1)
+                    function onClickDown(button, x, y)
+                        if button == 1 then
+                            return true
+                        end
+
+                        return false
+                    end
+
+                    function onClickRelease(button, x, y)
+                        if button == 1 then
+                            window.handleChoice(1)
+                            return true
+                        end
+
+                        return false
                     end
                 </script>
-            </buttoncontrol>
+            </stringcontrol>
 
-            <buttoncontrol name="choice2">
+            <stringcontrol name="choice2">
                 <bounds>24,120,-24,30</bounds>
                 <font>sheettext</font>
                 <color>#FFFFFF</color>
+                <readonly />
+                <nodrag />
+                <nodragselect />
                 <invisible />
 
+                <stateframe>
+                    <hover name="fieldfocus" offset="3,2,3,2" />
+                    <pressed name="fieldfocus" offset="3,2,3,2" />
+                </stateframe>
+
+                <cursor>
+                    <hover>hand</hover>
+                </cursor>
+
                 <script>
-                    function onButtonPress()
-                        window.handleChoice(2)
+                    function onClickDown(button, x, y)
+                        if button == 1 then
+                            return true
+                        end
+
+                        return false
+                    end
+
+                    function onClickRelease(button, x, y)
+                        if button == 1 then
+                            window.handleChoice(2)
+                            return true
+                        end
+
+                        return false
                     end
                 </script>
-            </buttoncontrol>
+            </stringcontrol>
 
-            <buttoncontrol name="choice3">
+            <stringcontrol name="choice3">
                 <bounds>24,158,-24,30</bounds>
                 <font>sheettext</font>
                 <color>#FFFFFF</color>
+                <readonly />
+                <nodrag />
+                <nodragselect />
                 <invisible />
 
+                <stateframe>
+                    <hover name="fieldfocus" offset="3,2,3,2" />
+                    <pressed name="fieldfocus" offset="3,2,3,2" />
+                </stateframe>
+
+                <cursor>
+                    <hover>hand</hover>
+                </cursor>
+
                 <script>
-                    function onButtonPress()
-                        window.handleChoice(3)
+                    function onClickDown(button, x, y)
+                        if button == 1 then
+                            return true
+                        end
+
+                        return false
+                    end
+
+                    function onClickRelease(button, x, y)
+                        if button == 1 then
+                            window.handleChoice(3)
+                            return true
+                        end
+
+                        return false
                     end
                 </script>
-            </buttoncontrol>
+            </stringcontrol>
 
         </sheetdata>
 
