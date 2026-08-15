@@ -111,6 +111,11 @@
         file="scripts/manager_bribe_context_wfrp1e.lua"
     />
 
+    <script
+        name="HideContextManagerWFRP1E"
+        file="scripts/manager_hide_context_wfrp1e.lua"
+    />
+
 
     <!-- WFRP1E initialization -->
 
@@ -140,6 +145,10 @@
 
     <includefile
         source="campaign/record_bribe_context_wfrp1e.xml"
+    />
+
+    <includefile
+        source="campaign/record_hide_context_wfrp1e.xml"
     />
 
     <includefile
