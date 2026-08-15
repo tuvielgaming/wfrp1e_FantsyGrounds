@@ -9,9 +9,10 @@
     a named Standard Test. It does NOT decide whether the Skill is relevant in
     the current fictional situation; that decision remains with the GM/player.
 
-    The registry deliberately contains only audited numeric effects. Conditional,
-    choice-based, target-side, derived and procedure effects remain outside the
-    registry until their individual rules contracts are implemented.
+    The generic Standard Test manager consumes only the simple fixed and
+    repeated-acquisition effects it already understands. Choice-based effects
+    remain explicit data and are consumed only by their dedicated audited
+    context resolver; they are never silently approximated as a fixed bonus.
 
     Important WFRP 1e distinction:
         There is no universal "owned Skill = +10%" rule.
@@ -24,6 +25,12 @@
         Bribery is explicitly +20% to Bribe tests. The Bribe test's separate
         target-Will-Power formula and situational/procedure modifiers are not
         encoded as Skill effects here.
+
+        Hide keeps its selected Skill effects distinct:
+        - Shadowing contributes +10%;
+        - appropriate Rural/Urban Concealment contributes +20% while stationary
+          or +5% while moving cautiously;
+        - Silent Move is not a Hide modifier; it belongs to its own procedures.
 ]]
 
 local tEffects = {
@@ -46,6 +53,28 @@ local tEffects = {
         gossip = {
             type = "fixed",
             value = 10
+        }
+    },
+
+    concealmentRural = {
+        hide = {
+            type = "choice",
+            condition = "rural-environment",
+            choices = {
+                stationary = 20,
+                cautiousMovement = 5
+            }
+        }
+    },
+
+    concealmentUrban = {
+        hide = {
+            type = "choice",
+            condition = "urban-environment",
+            choices = {
+                stationary = 20,
+                cautiousMovement = 5
+            }
         }
     },
 
@@ -86,6 +115,13 @@ local tEffects = {
     pickPocket = {
         pickPocket = {
             type = "repeated-acquisition"
+        }
+    },
+
+    shadowing = {
+        hide = {
+            type = "fixed",
+            value = 10
         }
     },
 
