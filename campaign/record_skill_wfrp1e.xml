@@ -76,8 +76,7 @@
                 <bounds>160,8,460,24</bounds>
                 <font>sheettext</font>
                 <color>#000000</color>
-                <frame>fieldlight</frame>
-                <frameoffset>4,2,4,2</frameoffset>
+                <frame name="fieldlight" />
 
                 <script>
                     function onButtonPress()
