@@ -5,9 +5,6 @@
     <!--
         WFRP1E Skill record
 
-        Checkpoint #10A establishes the persistent Skill data contract only.
-        It does not implement Standard Test automation or skill-specific rules.
-
         Persistent:
             name
             rulesId
@@ -15,8 +12,11 @@
             description
 
         rulesId is a stable, language-neutral mechanical identity. It is kept
-        separate from the visible record name so future localization and user
-        renaming cannot break rules lookup.
+        separate from the visible record name so localization and user renaming
+        cannot break rules lookup.
+
+        #10O keeps rulesId as the only persistent identity value but replaces
+        raw text entry with a localization-ready selector display.
 
         One acquired Skill instance may share a rulesId with another instance.
         Repeated acquisitions are rules-significant for some WFRP 1e Skills,
@@ -58,6 +58,10 @@
 
         <margins control="0,0,0,2" />
 
+        <script
+            file="campaign/scripts/skill_main_wfrp1e.lua"
+        />
+
         <sheetdata>
 
             <label name="rules_id_label">
@@ -68,9 +72,19 @@
                 />
             </label>
 
-            <basicstring name="rulesId">
+            <buttoncontrol name="rules_id_selector">
                 <bounds>160,8,460,24</bounds>
-            </basicstring>
+                <font>sheettext</font>
+                <color>#000000</color>
+                <frame>fieldlight</frame>
+                <frameoffset>4,2,4,2</frameoffset>
+
+                <script>
+                    function onButtonPress()
+                        window.openRulesIdSelector()
+                    end
+                </script>
+            </buttoncontrol>
 
 
             <label name="specialisation_label">
