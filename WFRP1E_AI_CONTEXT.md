@@ -1,6 +1,6 @@
 # WFRP1E Fantasy Grounds — AI Resume Context
 
-Last updated: 2026-08-15 14:42 Europe/Warsaw
+Last updated: 2026-08-15 15:30 Europe/Warsaw
 
 This is the single authoritative resume/checkpoint file for the Fantasy Grounds WFRP 1e project. Update this file in place; do not create overlapping context documents.
 
@@ -127,7 +127,7 @@ Career Skills:
 - successful purchase creates a normal owned acquisition;
 - Skill purchases share the Character advancement transaction/refund accounting.
 
-## 4. Repeated acquisition / Standard Tests — verified through #10P
+## 4. Repeated acquisition / Standard Tests — verified through #10Q
 
 ### Repeated acquisition
 Derived acquisition count groups owned rows by stable `rulesId`; no persisted rank.
@@ -264,7 +264,7 @@ FGU-specific #10O lesson:
 #10O merge:
 `6b1a5c0facb31125d9779547f7343a359d31e20e`
 
-### Bribe runtime-context preview (#10P PASS)
+### Bribe runtime context (#10P + #10Q PASS)
 Rulebook-audited Bribe procedure boundary:
 - base = `100 - target WP`;
 - Bribery adds verified +20%;
@@ -273,32 +273,41 @@ Rulebook-audited Bribe procedure boundary:
 - GM may add other circumstance modifiers;
 - GM establishes the minimum acceptable bribe externally and the offered bribe may not be below it.
 
-Verified implementation:
-- Ctrl+Double-click owned Bribery now opens the Standard Test selector even though Bribe is context-required;
-- selector shows all three candidates: Bribe, Gossip, Loyalty;
-- Bribe opens transient `BRIBE CONTEXT` preview;
-- Gossip/Loyalty are clearly BASE-only from Bribery because Bribery +20 applies only to Bribe;
-- transient inputs: target WP, alignment modifier, count of extra 50%-of-minimum steps, Other GM modifier;
-- Bribery +20 is resolved through the existing audited Skill-effect resolver;
-- preview calculates final target only; no dice roll in #10P;
+#10P verified context/preview:
+- Ctrl+Double-click owned Bribery opens the Standard Test selector even though Bribe is context-required;
+- selector shows Bribe, Gossip and Loyalty;
+- Bribe opens transient `BRIBE CONTEXT`;
+- Gossip/Loyalty are BASE-only from Bribery because Bribery +20 applies only to Bribe;
+- inputs: target WP, alignment modifier, extra 50%-of-minimum steps, Other GM modifier;
+- invalid target WP/alignment/offer-step inputs rejected;
 - no target clamp;
-- invalid target WP/alignment/offer-step inputs are rejected;
-- no Character/Skill/Career/XP persistence;
+- no persistent data;
+- result is split into multiple lines to avoid FGU text clipping;
 - X closes without side effects.
 
-Verified examples:
-- WP 40, alignment 0, offer steps 0, other 0 => 80%;
-- WP 40, alignment +10, offer steps 2, other -10 => 100%;
-- WP 70, alignment -20, offer steps 0, other 0 => 30%.
+Verified #10P examples:
+- WP 40, alignment 0, offer 0, other 0 => 80%;
+- WP 40, alignment +10, offer 2, other -10 => 100%;
+- WP 70, alignment -20, offer 0, other 0 => 30%.
 
-Final popup presentation:
-- do not use one long result string; it clipped in FGU;
-- result is split into readable lines for base/Skill, procedure modifiers, and separate FINAL TARGET;
-- long hint text also split to avoid clipping.
+#10Q verified execution:
+- Bribe popup keeps separate CALCULATE and ROLL actions;
+- CALCULATE uses the #10P resolver and remains non-rolling;
+- ROLL calls the same resolver once and executes that exact resolved target; Bribe arithmetic is not duplicated in the UI;
+- percentile pool remains `{ "d100" }` only;
+- success is `roll <= final target`;
+- no target clamp;
+- chat includes Character, roll, base `(100 - WP)`, Bribery modifier, alignment, offer, Other, final target and SUCCESS/FAILURE;
+- invalid context launches no dice and shows the same validation as CALCULATE;
+- no Character/Skill/Career/XP persistence.
 
-PR #14:
+PR #14 (#10P):
 - verified head `a315bdb1c76ba5c3253f062f92b01d37595b6e3f`
 - merge `afdc9b978fac9f8cd24cccbb968aaceaca42daec`
+
+PR #15 (#10Q):
+- verified head `5262ded7059e04bc745b7b564cf49ec440da817d`
+- merge `0b774c1492d44db1d9618da55754e603f7d5815d`
 
 ## 5. Verified checkpoint history
 
@@ -319,14 +328,15 @@ PR #14:
 - #10N Bribery +20 Skill effect — PASS
 - #10O Skill Rules ID selector + popup UX — PASS
 - #10P Bribe runtime-context preview — PASS
+- #10Q executable Bribe roll — PASS
 
 Rejected experiment:
 - #9C.1 full-window focus-overlay attempts — removed; do not retry.
 
 ## 6. Current verified baseline
 
-Current verified mechanics/UI merge after #10P:
-- `afdc9b978fac9f8cd24cccbb968aaceaca42daec`
+Current verified mechanics/UI merge after #10Q:
+- `0b774c1492d44db1d9618da55754e603f7d5815d`
 
 Context updates are metadata-only and may make `main` newer than the verified merge.
 
@@ -350,12 +360,6 @@ Important current files include:
 
 ## 7. Next checkpoint
 
-#10Q is NOT frozen yet.
+#10R is NOT frozen yet.
 
-Natural next dependency:
-- make the now-verified Bribe context executable through the existing percentile roll engine;
-- reuse the exact #10P preview calculation rather than reimplementing Bribe arithmetic in the roll layer;
-- preserve explicit breakdown in chat (base, Bribery +20, alignment, offer, other, final target);
-- no target clamp;
-- no persistence;
-- do not add new Bribe rules beyond the already-audited #10P procedure boundary.
+Do a fresh source audit before implementing it. Preferred next direction is the smallest remaining Standard Test dependency that can reuse the verified transient-context and percentile architecture without inventing a generic formula engine or new persistence. Candidate areas include another target-characteristic context formula or, if a clean launch surface can be designed first, the separate unskilled Pick Pocket -30% rule.
