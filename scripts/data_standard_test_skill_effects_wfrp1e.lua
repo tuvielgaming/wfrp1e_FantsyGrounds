@@ -1,6 +1,6 @@
 --[[
     WFRP1E
-    Audited Standard Test Skill effects - #10J subset
+    Audited Standard Test Skill effects
 
     Mechanics authority:
         WFRP 1e Core Rulebook Skills and Standard Tests sections.
@@ -9,9 +9,9 @@
     a named Standard Test. It does NOT decide whether the Skill is relevant in
     the current fictional situation; that decision remains with the GM/player.
 
-    #10J deliberately contains only context-free numeric effects needed to
-    validate the resolver boundary. Conditional, choice-based, target-side,
-    derived and procedure effects remain outside this checkpoint.
+    The registry deliberately contains only audited numeric effects. Conditional,
+    choice-based, target-side, derived and procedure effects remain outside the
+    registry until their individual rules contracts are implemented.
 
     Important WFRP 1e distinction:
         There is no universal "owned Skill = +10%" rule.
@@ -20,9 +20,20 @@
         Their first acquisition therefore contributes +0% through this effect;
         other rules determine whether the Skill gates an attempt or removes an
         unskilled penalty.
+
+        Bribery is explicitly +20% to Bribe tests. The Bribe test's separate
+        target-Will-Power formula and situational/procedure modifiers are not
+        encoded as Skill effects here.
 ]]
 
 local tEffects = {
+    bribery = {
+        bribe = {
+            type = "fixed",
+            value = 20
+        }
+    },
+
     charm = {
         bargain = {
             type = "fixed",
