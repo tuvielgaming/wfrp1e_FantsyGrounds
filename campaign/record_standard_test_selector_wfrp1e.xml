@@ -3,27 +3,21 @@
 <root>
 
     <!--
-        #10L transient Standard Test selector
+        Transient Standard Test selector
 
         This window is intentionally unbound. It contains no persistent data.
         The caller supplies one Character node, one explicitly selected owned
-        Skill rulesId, and the named Standard Test candidates already present
-        in the audited Standard Test registry.
+        Skill rulesId, and named Standard Test candidates.
 
-        Only tests whose #10K selected-Skill final target resolves locally are
-        presented. Selecting a row calls the already-verified #10K executable
-        roll path; no new mechanics are implemented here.
+        Locally resolvable selected-Skill tests execute through the already-
+        verified selected Skill roll path.
 
-        The current audited registry never produces more than three locally
-        rollable choices for one owned Skill. Fixed rows are used here on
-        purpose instead of dynamically created unbound windowlist children;
-        this avoids any database/windowclass side effects in a transient dialog.
+        #10P adds one explicit context-required route:
+        Bribery -> Bribe opens the transient Bribe preview window.
 
-        UX:
-        - choice rows are left-aligned;
-        - CoreRPG fieldfocus state frame highlights the hovered/pressed row;
-        - the hand cursor makes the clickable row explicit;
-        - explicit X closes the transient popup without launching a roll.
+        Bribery's other candidate tests, Gossip and Loyalty, remain available
+        as BASE-only choices. Bribery's audited +20 modifier is NOT applied to
+        those tests.
     -->
 
     <windowclass name="wfrp1e_standard_test_selector">
@@ -63,10 +57,16 @@
                 return tostring(nModifier)
             end
 
-            local function resetChoice(
-                control,
-                nIndex
-            )
+            local function isBriberyBaseOnlyChoice(sTestId)
+                return
+                    sSelectedSkillRulesId == "bribery"
+                    and (
+                        sTestId == "gossip"
+                        or sTestId == "loyalty"
+                    )
+            end
+
+            local function resetChoice(control, nIndex)
                 aChoiceTestIds[nIndex] = nil
                 control.setValue("")
                 control.setVisible(false)
@@ -76,11 +76,23 @@
                 control,
                 nIndex,
                 sTestId,
-                tTarget
+                sText
             )
                 aChoiceTestIds[nIndex] = sTestId
+                control.setValue(sText)
+                control.setVisible(true)
+            end
 
-                local sText =
+            local function configureResolvedChoice(
+                control,
+                nIndex,
+                sTestId,
+                tTarget
+            )
+                configureChoice(
+                    control,
+                    nIndex,
+                    sTestId,
                     sTestId
                     .. "  |  "
                     .. tostring(tTarget.target)
@@ -89,9 +101,24 @@
                     .. "% + Skill "
                     .. signedModifier(tTarget.skillModifier)
                     .. "%)"
+                )
+            end
 
-                control.setValue(sText)
-                control.setVisible(true)
+            local function configureBaseOnlyChoice(
+                control,
+                nIndex,
+                sTestId,
+                tBase
+            )
+                configureChoice(
+                    control,
+                    nIndex,
+                    sTestId,
+                    sTestId
+                    .. "  |  "
+                    .. tostring(tBase.baseTarget)
+                    .. "%  (BASE only; Bribery modifier not applied)"
+                )
             end
 
             function setContext(
@@ -117,14 +144,8 @@
                 for _, sTestId
                     in ipairs(aCandidateTestIds or {})
                 do
-                    local tTarget =
-                        StandardTestManagerWFRP1E.resolveSelectedSkillTarget(
-                            nodeCharacter,
-                            sSelectedSkillRulesId,
-                            sTestId
-                        )
-
-                    if tTarget.valid
+                    if sTestId == "bribe"
+                        and sSelectedSkillRulesId == "bribery"
                         and nCreated &lt; #aControls
                     then
                         nCreated = nCreated + 1
@@ -133,8 +154,47 @@
                             aControls[nCreated],
                             nCreated,
                             sTestId,
-                            tTarget
+                            "bribe  |  enter target WP / procedure context (preview only)"
                         )
+                    else
+                        local tTarget =
+                            StandardTestManagerWFRP1E.resolveSelectedSkillTarget(
+                                nodeCharacter,
+                                sSelectedSkillRulesId,
+                                sTestId
+                            )
+
+                        if tTarget.valid
+                            and nCreated &lt; #aControls
+                        then
+                            nCreated = nCreated + 1
+
+                            configureResolvedChoice(
+                                aControls[nCreated],
+                                nCreated,
+                                sTestId,
+                                tTarget
+                            )
+                        elseif isBriberyBaseOnlyChoice(sTestId)
+                            and nCreated &lt; #aControls
+                        then
+                            local tBase =
+                                StandardTestManagerWFRP1E.resolveBaseTarget(
+                                    nodeCharacter,
+                                    sTestId
+                                )
+
+                            if tBase.valid then
+                                nCreated = nCreated + 1
+
+                                configureBaseOnlyChoice(
+                                    aControls[nCreated],
+                                    nCreated,
+                                    sTestId,
+                                    tBase
+                                )
+                            end
+                        end
                     end
                 end
 
@@ -151,12 +211,45 @@
                     return
                 end
 
-                local tResult =
-                    StandardTestManagerWFRP1E.performSelectedSkillTest(
-                        nodeCharacter,
-                        sSelectedSkillRulesId,
-                        sTestId
-                    )
+                if sTestId == "bribe"
+                    and sSelectedSkillRulesId == "bribery"
+                then
+                    local wContext =
+                        Interface.openWindow(
+                            "wfrp1e_bribe_context",
+                            ""
+                        )
+
+                    if wContext
+                        and wContext.setContext
+                    then
+                        wContext.setContext(
+                            nodeCharacter,
+                            sSelectedSkillRulesId
+                        )
+
+                        close()
+                    end
+
+                    return
+                end
+
+                local tResult
+
+                if isBriberyBaseOnlyChoice(sTestId) then
+                    tResult =
+                        StandardTestManagerWFRP1E.performBaseTest(
+                            nodeCharacter,
+                            sTestId
+                        )
+                else
+                    tResult =
+                        StandardTestManagerWFRP1E.performSelectedSkillTest(
+                            nodeCharacter,
+                            sSelectedSkillRulesId,
+                            sTestId
+                        )
+                end
 
                 if tResult
                     and tResult.launched == true
@@ -214,16 +307,11 @@
                     <pressed name="fieldfocus" offset="3,2,3,2" />
                 </stateframe>
 
-                <cursor>
-                    <hover>hand</hover>
-                </cursor>
+                <cursor><hover>hand</hover></cursor>
 
                 <script>
                     function onClickDown(button, x, y)
-                        if button == 1 then
-                            return true
-                        end
-
+                        if button == 1 then return true end
                         return false
                     end
 
@@ -232,7 +320,6 @@
                             window.handleChoice(1)
                             return true
                         end
-
                         return false
                     end
                 </script>
@@ -252,16 +339,11 @@
                     <pressed name="fieldfocus" offset="3,2,3,2" />
                 </stateframe>
 
-                <cursor>
-                    <hover>hand</hover>
-                </cursor>
+                <cursor><hover>hand</hover></cursor>
 
                 <script>
                     function onClickDown(button, x, y)
-                        if button == 1 then
-                            return true
-                        end
-
+                        if button == 1 then return true end
                         return false
                     end
 
@@ -270,7 +352,6 @@
                             window.handleChoice(2)
                             return true
                         end
-
                         return false
                     end
                 </script>
@@ -290,16 +371,11 @@
                     <pressed name="fieldfocus" offset="3,2,3,2" />
                 </stateframe>
 
-                <cursor>
-                    <hover>hand</hover>
-                </cursor>
+                <cursor><hover>hand</hover></cursor>
 
                 <script>
                     function onClickDown(button, x, y)
-                        if button == 1 then
-                            return true
-                        end
-
+                        if button == 1 then return true end
                         return false
                     end
 
@@ -308,7 +384,6 @@
                             window.handleChoice(3)
                             return true
                         end
-
                         return false
                     end
                 </script>

@@ -20,6 +20,10 @@
     #10M adds one explicit context path for Pick Lock. Ctrl+Double-click on an
     owned Pick Lock Skill opens a transient Lock Rating dialog. The supplied
     rating is runtime context only; no lock data is persisted on the Character.
+
+    #10P adds one explicit ambiguous context route for Bribery. Bribe remains
+    context-required, while Gossip/Loyalty may still be offered as BASE-only
+    tests because Bribery has no audited numeric effect for those tests.
 ]]
 
 local function getCharacterNode()
@@ -125,6 +129,24 @@ local function getLocallyRollableSelectedTests(
 end
 
 
+local function hasBribeContextCandidate(
+    sRulesId,
+    aPotentialTests
+)
+    if sRulesId ~= "bribery" then
+        return false
+    end
+
+    for _, sTestId in ipairs(aPotentialTests or {}) do
+        if sTestId == "bribe" then
+            return true
+        end
+    end
+
+    return false
+end
+
+
 local function addBaseTargetDiagnostics(
     nodeChar,
     aPotentialTests,
@@ -226,6 +248,51 @@ local function addSelectedSkillModifierDiagnostics(
 end
 
 
+local function addBriberyRollActionDiagnostic(
+    nodeChar,
+    aPotentialTests,
+    aLines
+)
+    local aChoices = {}
+
+    for _, sTestId in ipairs(aPotentialTests or {}) do
+        if sTestId == "bribe" then
+            table.insert(
+                aChoices,
+                "bribe (context preview)"
+            )
+        else
+            local tBase =
+                StandardTestManagerWFRP1E.resolveBaseTarget(
+                    nodeChar,
+                    sTestId
+                )
+
+            if tBase.valid then
+                table.insert(
+                    aChoices,
+                    sTestId
+                    .. " "
+                    .. tostring(tBase.baseTarget)
+                    .. "% BASE"
+                )
+            end
+        end
+    end
+
+    if #aChoices > 0 then
+        table.insert(
+            aLines,
+            "Ctrl+Double-click: Choose Standard Test: "
+            .. table.concat(
+                aChoices,
+                ", "
+            )
+        )
+    end
+end
+
+
 local function addRollActionDiagnostic(
     nodeChar,
     sRulesId,
@@ -289,6 +356,19 @@ local function addRollActionDiagnostic(
     end
 
     if #aPotentialTests < 2 then
+        return
+    end
+
+    if hasBribeContextCandidate(
+        sRulesId,
+        aPotentialTests
+    ) then
+        addBriberyRollActionDiagnostic(
+            nodeChar,
+            aPotentialTests,
+            aLines
+        )
+
         return
     end
 
@@ -467,15 +547,23 @@ local function openAmbiguousTestSelector(
     sRulesId,
     aPotentialTests
 )
-    local aRollable =
-        getLocallyRollableSelectedTests(
-            nodeChar,
+    local bHasBribeContext =
+        hasBribeContextCandidate(
             sRulesId,
             aPotentialTests
         )
 
-    if #aRollable == 0 then
-        return false
+    if not bHasBribeContext then
+        local aRollable =
+            getLocallyRollableSelectedTests(
+                nodeChar,
+                sRulesId,
+                aPotentialTests
+            )
+
+        if #aRollable == 0 then
+            return false
+        end
     end
 
     local wSelector =
