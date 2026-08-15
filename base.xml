@@ -19,6 +19,10 @@
         source="strings/strings_wfrp1e.xml"
     />
 
+    <includefile
+        source="strings/strings_skill_identities_wfrp1e.xml"
+    />
+
 
     <!-- WFRP1E graphic resources -->
 
@@ -37,6 +41,11 @@
     <script
         name="DataLibraryWFRP1E"
         file="scripts/data_library_wfrp1e.lua"
+    />
+
+    <script
+        name="DataSkillsWFRP1E"
+        file="scripts/data_skills_wfrp1e.lua"
     />
 
     <script
@@ -122,6 +131,10 @@
 
     <includefile
         source="campaign/record_pick_lock_context_wfrp1e.xml"
+    />
+
+    <includefile
+        source="campaign/record_skill_rules_id_selector_wfrp1e.xml"
     />
 
     <includefile

@@ -1,0 +1,190 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+
+<root>
+
+    <!--
+        #10O transient Skill Rules ID selector
+
+        The selector and all choice rows are intentionally unbound. The source
+        Skill record remains the only persistence owner of `rulesId`.
+
+        IMPORTANT:
+        Use windowlist.createWindow(nil) with the statically declared child
+        class. Do not use the rejected #10L createWindowWithClass path.
+
+        UX:
+        - CoreRPG scrollbar_list provides the themed draggable list scrollbar;
+        - transient search scrolls to the first localized label / rulesId match;
+        - choice rows are left-aligned and highlight on hover;
+        - explicit X closes the transient popup without changing data.
+    -->
+
+    <windowclass name="wfrp1e_skill_rules_id_selector">
+
+        <frame>utilitybox</frame>
+
+        <placement>
+            <size>
+                <width>680</width>
+                <height>560</height>
+            </size>
+        </placement>
+
+        <sizelimits>
+            <minimum>
+                <width>680</width>
+                <height>560</height>
+            </minimum>
+            <maximum>
+                <width>680</width>
+                <height>560</height>
+            </maximum>
+        </sizelimits>
+
+        <script
+            file="campaign/scripts/skill_rules_id_selector_wfrp1e.lua"
+        />
+
+        <sheetdata>
+
+            <label name="title">
+                <bounds>24,20,-64,22</bounds>
+                <color>#FFFFFF</color>
+                <static textres="wfrp1e_skill_rules_id_select" />
+            </label>
+
+            <buttoncontrol name="close_button">
+                <bounds>-54,16,30,28</bounds>
+                <font>sheettext</font>
+                <color>#FFFFFF</color>
+                <text>X</text>
+
+                <hover>
+                    <frame name="fieldfocus" offset="3,2,3,2" />
+                    <text>X</text>
+                </hover>
+
+                <tooltip text="Close" />
+
+                <script>
+                    function onButtonPress()
+                        window.close()
+                    end
+                </script>
+            </buttoncontrol>
+
+            <label name="hint">
+                <bounds>24,48,-24,34</bounds>
+                <color>#FFFFFF</color>
+                <static textres="wfrp1e_skill_rules_id_select_hint" />
+            </label>
+
+            <stringcontrol name="search">
+                <bounds>24,88,-34,28</bounds>
+                <font>sheettext</font>
+                <color>#FFFFFF</color>
+                <frame name="fieldfocus" offset="5,4,5,4" />
+                <empty text="Type Skill name or Rules ID to jump..." />
+                <nodrag />
+
+                <script>
+                    function onValueChanged()
+                        window.scrollToSearchMatch(
+                            getValue()
+                        )
+                    end
+                </script>
+            </stringcontrol>
+
+            <windowlist name="choices">
+                <bounds>24,124,-24,-24</bounds>
+                <class>wfrp1e_skill_rules_id_choice</class>
+
+                <script>
+                    function selectRulesId(sRulesId)
+                        window.applyRulesId(sRulesId)
+                    end
+                </script>
+            </windowlist>
+
+            <scrollbar_list>
+                <anchored to="choices" />
+                <target>choices</target>
+            </scrollbar_list>
+
+        </sheetdata>
+
+    </windowclass>
+
+
+    <windowclass name="wfrp1e_skill_rules_id_choice">
+
+        <sizelimits>
+            <minimum>
+                <height>28</height>
+            </minimum>
+        </sizelimits>
+
+        <script>
+            local sChoiceRulesId = ""
+
+            function setChoice(sRulesId, sDisplay)
+                sChoiceRulesId = tostring(sRulesId or "")
+                choice.setValue(tostring(sDisplay or ""))
+            end
+
+            function handleChoice()
+                if windowlist
+                    and windowlist.selectRulesId
+                then
+                    windowlist.selectRulesId(
+                        sChoiceRulesId
+                    )
+                end
+            end
+        </script>
+
+        <sheetdata>
+
+            <stringcontrol name="choice">
+                <bounds>4,0,-4,26</bounds>
+                <font>sheettext</font>
+                <color>#FFFFFF</color>
+                <readonly />
+                <nodrag />
+                <nodragselect />
+
+                <stateframe>
+                    <hover name="fieldfocus" offset="3,2,3,2" />
+                    <pressed name="fieldfocus" offset="3,2,3,2" />
+                </stateframe>
+
+                <cursor>
+                    <hover>hand</hover>
+                </cursor>
+
+                <script>
+                    function onClickDown(button, x, y)
+                        if button == 1 then
+                            return true
+                        end
+
+                        return false
+                    end
+
+                    function onClickRelease(button, x, y)
+                        if button == 1 then
+                            window.handleChoice()
+                            return true
+                        end
+
+                        return false
+                    end
+                </script>
+            </stringcontrol>
+
+        </sheetdata>
+
+    </windowclass>
+
+</root>
