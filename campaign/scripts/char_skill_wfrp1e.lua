@@ -26,8 +26,12 @@
     tests because Bribery has no audited numeric effect for those tests.
 
     #10R adds a BASE-only Hide context preview. The GM supplies target
-    Initiative (highest Initiative when hiding from a group). Silent Move,
-    Concealment and other situational modifiers remain deliberately separate.
+    Initiative (highest Initiative when hiding from a group).
+
+    #10S passes the exact selected Hide Skill into that context. Shadowing is a
+    fixed +10; Rural/Urban Concealment requires the explicit stationary/cautious
+    choice. Silent Move is not a Hide modifier and other owned Skills are not
+    auto-stacked.
 ]]
 
 local function getCharacterNode()
@@ -311,9 +315,24 @@ local function addRollActionDiagnostic(
     aLines
 )
     if isHideContextCandidate(aPotentialTests) then
+        local sAction
+
+        if sRulesId == "concealmentRural"
+            or sRulesId == "concealmentUrban"
+        then
+            sAction =
+                "Ctrl+Double-click: Enter target Initiative, choose Concealment state and preview hide"
+        elseif sRulesId == "shadowing" then
+            sAction =
+                "Ctrl+Double-click: Enter target Initiative and preview hide with Shadowing +10%"
+        else
+            sAction =
+                "Ctrl+Double-click: Enter target Initiative and preview hide"
+        end
+
         table.insert(
             aLines,
-            "Ctrl+Double-click: Enter target Initiative and preview hide BASE"
+            sAction
         )
         return
     end
@@ -640,7 +659,10 @@ local function openPickLockContext(
 end
 
 
-local function openHideContext(nodeChar)
+local function openHideContext(
+    nodeChar,
+    sRulesId
+)
     local wContext =
         Interface.openWindow(
             "wfrp1e_hide_context",
@@ -653,7 +675,10 @@ local function openHideContext(nodeChar)
         return false
     end
 
-    wContext.setContext(nodeChar)
+    wContext.setContext(
+        nodeChar,
+        sRulesId
+    )
     return true
 end
 
@@ -684,7 +709,10 @@ function handleBaseTestDoubleClick()
         )
 
     if isHideContextCandidate(aPotentialTests) then
-        return openHideContext(nodeChar)
+        return openHideContext(
+            nodeChar,
+            sRulesId
+        )
     end
 
     if sRulesId == "pickLock"
