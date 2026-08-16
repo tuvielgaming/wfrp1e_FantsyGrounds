@@ -112,18 +112,24 @@
             </label>
 
             <buttoncontrol name="stationary_choice">
-                <bounds>290,188,188,32</bounds>
+                <anchored height="28">
+                    <left offset="290" />
+                    <top offset="190" />
+                    <sizelimits>
+                        <minimum>
+                            <width>145</width>
+                        </minimum>
+                    </sizelimits>
+                </anchored>
                 <font>sheettext</font>
                 <color>#000000</color>
                 <frame name="fieldlight" />
                 <invisible />
 
-                <hover>
-                    <frame name="fieldfocus" offset="3,2,3,2" />
-                </hover>
-                <pressed>
-                    <frame name="fieldfocus" offset="3,2,3,2" />
-                </pressed>
+                <stateframe>
+                    <hover name="fieldfocus" />
+                    <pressed name="fieldfocus" />
+                </stateframe>
 
                 <cursor><hover>hand</hover></cursor>
 
@@ -135,18 +141,24 @@
             </buttoncontrol>
 
             <buttoncontrol name="cautious_choice">
-                <bounds>488,188,188,32</bounds>
+                <anchored height="28">
+                    <left parent="stationary_choice" anchor="right" offset="10" />
+                    <top offset="190" />
+                    <sizelimits>
+                        <minimum>
+                            <width>190</width>
+                        </minimum>
+                    </sizelimits>
+                </anchored>
                 <font>sheettext</font>
                 <color>#000000</color>
                 <frame name="fieldlight" />
                 <invisible />
 
-                <hover>
-                    <frame name="fieldfocus" offset="3,2,3,2" />
-                </hover>
-                <pressed>
-                    <frame name="fieldfocus" offset="3,2,3,2" />
-                </pressed>
+                <stateframe>
+                    <hover name="fieldfocus" />
+                    <pressed name="fieldfocus" />
+                </stateframe>
 
                 <cursor><hover>hand</hover></cursor>
 
