@@ -5,11 +5,19 @@
     #10R verified the BASE formula.
     #10S adds one explicitly selected owned Hide Skill effect and a separate
     Other GM modifier. All data remains transient and no dice are rolled.
+
+    #10T is UI-only: mutually exclusive Concealment states use explicit radio
+    markers so the required choice is visible before validation.
 ]]
 
 local nodeCharacter = nil
 local sSelectedSkillRulesId = ""
 local sSkillMode = ""
+
+-- UTF-8 byte escapes avoid depending on the Lua source file's text encoding.
+-- U+25CB WHITE CIRCLE / U+25CF BLACK CIRCLE.
+local RADIO_UNSELECTED = "\226\151\139"
+local RADIO_SELECTED = "\226\151\143"
 
 
 local function signedModifier(nModifier)
@@ -27,6 +35,15 @@ local function isConcealmentSkill()
     return
         sSelectedSkillRulesId == "concealmentRural"
         or sSelectedSkillRulesId == "concealmentUrban"
+end
+
+
+local function radioMarker(bSelected)
+    if bSelected then
+        return RADIO_SELECTED
+    end
+
+    return RADIO_UNSELECTED
 end
 
 
@@ -61,13 +78,13 @@ local function refreshSkillControls()
         cautious_choice.setVisible(true)
 
         stationary_choice.setValue(
-            (sSkillMode == "stationary" and "> " or "")
-            .. "Stationary  +20%"
+            radioMarker(sSkillMode == "stationary")
+            .. "  Stationary  +20%"
         )
 
         cautious_choice.setValue(
-            (sSkillMode == "cautiousMovement" and "> " or "")
-            .. "Cautious movement  +5%"
+            radioMarker(sSkillMode == "cautiousMovement")
+            .. "  Cautious movement  +5%"
         )
     else
         selected_skill_value.setValue(
