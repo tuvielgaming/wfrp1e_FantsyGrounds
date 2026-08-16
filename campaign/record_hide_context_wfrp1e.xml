@@ -122,8 +122,8 @@
                 <invisible />
 
                 <stateframe>
-                    <hover name="fieldfocus" offset="3,2,3,2" />
-                    <pressed name="fieldfocus" offset="3,2,3,2" />
+                    <hover name="fieldfocus" offset="7,5,7,5" />
+                    <pressed name="fieldfocus" offset="7,5,7,5" />
                 </stateframe>
 
                 <cursor><hover>hand</hover></cursor>
@@ -155,8 +155,8 @@
                 <invisible />
 
                 <stateframe>
-                    <hover name="fieldfocus" offset="3,2,3,2" />
-                    <pressed name="fieldfocus" offset="3,2,3,2" />
+                    <hover name="fieldfocus" offset="7,5,7,5" />
+                    <pressed name="fieldfocus" offset="7,5,7,5" />
                 </stateframe>
 
                 <cursor><hover>hand</hover></cursor>
