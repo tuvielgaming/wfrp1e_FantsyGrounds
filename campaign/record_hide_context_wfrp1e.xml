@@ -4,6 +4,7 @@
 
     <!--
         #10S transient Hide context preview
+        #10U UI-only input-style Concealment state choices
 
         No persistent data. No roll.
         The GM supplies target Initiative; for a group, use the highest
@@ -112,8 +113,9 @@
 
             <stringcontrol name="stationary_choice">
                 <bounds>290,190,180,28</bounds>
+                <frame name="fieldlight" offset="7,5,7,5" />
                 <font>sheettext</font>
-                <color>#FFFFFF</color>
+                <color>#000000</color>
                 <readonly />
                 <nodrag />
                 <nodragselect />
@@ -144,8 +146,9 @@
 
             <stringcontrol name="cautious_choice">
                 <bounds>480,190,-24,28</bounds>
+                <frame name="fieldlight" offset="7,5,7,5" />
                 <font>sheettext</font>
-                <color>#FFFFFF</color>
+                <color>#000000</color>
                 <readonly />
                 <nodrag />
                 <nodragselect />
