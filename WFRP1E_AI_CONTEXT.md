@@ -1,6 +1,6 @@
 # WFRP1E Fantasy Grounds — AI Resume Context
 
-Last updated: 2026-08-15 18:06 Europe/Warsaw
+Last updated: 2026-08-16 07:51 Europe/Warsaw
 
 This is the single authoritative resume/checkpoint file for the Fantasy Grounds WFRP 1e project. Update this file in place; do not create overlapping context documents.
 
@@ -122,7 +122,7 @@ Rules ID selector (#10O):
 
 FGU #10O lesson: avoid eager top-level Lua package initialization using helpers such as `ipairs`; FGU produced `attempt to call global 'ipairs' (a nil value)`. Use lazy lookup/population. Do not reuse rejected #10L dynamic `windowlist.createWindowWithClass(...)` path.
 
-## 4. Standard Tests — verified through #10S
+## 4. Standard Tests — verified through #10T
 
 ### Repeated acquisition
 Derived acquisition count groups owned Skills by stable `rulesId`; no persisted rank.
@@ -217,7 +217,7 @@ Verified implementation:
 #10Q merge:
 `0b774c1492d44db1d9618da55754e603f7d5815d`
 
-### Hide (#10R–#10S PASS)
+### Hide (#10R–#10T PASS)
 Rulebook-audited base:
 `Current Initiative + Current Cool - target Initiative`
 
@@ -257,15 +257,28 @@ If Character owns both Shadowing and Concealment, opening from Shadowing uses on
 #10S merge:
 `3894a24e72330354c74aef908905b8191dffc3a3`
 
-### Popup UX direction
-Verified popup UX already includes readable dark-frame text, hover-highlight rows, explicit X close on selectors, and search/scroll on the long Rules ID selector.
+Verified #10T UX:
+- Concealment Stationary/Cautious choices visibly use radio-style markers;
+- unselected = `○`, selected = `●`;
+- only one is selected at a time;
+- full-row hover/click behavior remains intact;
+- validation and calculations are unchanged;
+- radio markers are represented via UTF-8 byte escapes in Lua to avoid source encoding ambiguity.
 
-User's next requested UX improvement:
-- mutually exclusive choices should visibly look like radio controls BEFORE validation;
-- use explicit empty/selected markers such as `○` / `●` at the start of each choice rather than only a `>` prefix;
-- Hide Concealment Stationary/Cautious is the first concrete case;
-- apply the same visual convention to future comparable single-choice popup options where appropriate;
-- this is presentation/interaction affordance only, not a mechanics or persistence change.
+#10T verified head:
+`7bd5e1f306b5227ace86f74aa35d21c3be000793`
+
+#10T merge:
+`318cf48e9b81996f3b277713d52cfec56ebc567a`
+
+### Popup UX direction
+Verified popup UX includes readable dark-frame text, hover-highlight rows, explicit X close on selectors, search/scroll on the long Rules ID selector, and explicit radio markers for mutually exclusive Hide choices.
+
+Next requested UX refinement:
+- make the radio choices visually stronger by styling the option rows like the existing light input controls;
+- preferred direction: whole Stationary/Cautious row looks like a read-only input-style selectable control, with the radio marker at the left;
+- preserve whole-row click target, hover state, and mutually exclusive `○` / `●` feedback;
+- UI only; no mechanics or persistence change.
 
 ## 5. Verified checkpoint history
 
@@ -289,6 +302,7 @@ User's next requested UX improvement:
 - #10Q executable Bribe roll — PASS
 - #10R Hide target-Initiative BASE preview — PASS
 - #10S Hide selected-Skill modifier preview — PASS
+- #10T radio-button UX for Hide choices — PASS
 
 Rejected experiments / lessons:
 - #9C.1 full-window focus-overlay attempts — removed; do not retry.
@@ -297,8 +311,8 @@ Rejected experiments / lessons:
 
 ## 6. Current verified baseline
 
-Current verified mechanics/UI merge after #10S:
-- `3894a24e72330354c74aef908905b8191dffc3a3`
+Current verified mechanics/UI merge after #10T:
+- `318cf48e9b81996f3b277713d52cfec56ebc567a`
 
 Context updates are metadata-only and may make `main` newer than the verified merge.
 
@@ -320,15 +334,15 @@ Important current files include:
 
 ## 7. Next checkpoint
 
-#10T — NOT IMPLEMENTED / NOT FROZEN.
+#10U — NOT IMPLEMENTED / NOT FROZEN.
 
 Resume intent:
-- UI-only polish for mutually exclusive popup choices;
-- first case: HIDE CONTEXT Concealment state;
-- replace the current weak textual selection affordance with explicit radio-button-style markers (`○` unselected, `●` selected) at the beginning of each option;
-- retain hover highlighting and existing click behavior;
-- preserve validation when no option is selected;
-- consider applying the same visual convention to other/future mutually exclusive popup choices, but do not broaden mechanics;
-- no calculation, dice, persistence, Character, Career, XP, or Skill-effect changes.
+- UI-only polish for HIDE CONTEXT Concealment state;
+- style each mutually exclusive choice as an input-like light rectangle consistent with Target Initiative / Other modifier fields;
+- keep the explicit radio marker at the left of each option (`○` / `●`);
+- whole option row remains clickable and hover-highlighted;
+- preserve existing selection, validation and calculation behavior exactly;
+- no XML/Lua mechanics changes beyond presentation wiring required to render the rows;
+- no dice, persistence, Character, Career, XP, or Skill-effect changes.
 
-After #10T is separately verified, return to Hide execution (natural next mechanics dependency: roll the already-verified #10S final Hide target through the existing d100 engine).
+After #10U is separately verified, return to Hide execution: roll the already-verified final Hide target through the existing d100 engine.
