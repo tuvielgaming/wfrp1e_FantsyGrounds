@@ -8,6 +8,8 @@
 
     #10T is UI-only: mutually exclusive Concealment states use explicit radio
     markers so the required choice is visible before validation.
+
+    #10U keeps those choices input-like and sizes them to their rendered text.
 ]]
 
 local nodeCharacter = nil
@@ -18,6 +20,12 @@ local sSkillMode = ""
 -- U+25CB WHITE CIRCLE / U+25CF BLACK CIRCLE.
 local RADIO_UNSELECTED = "\226\151\139"
 local RADIO_SELECTED = "\226\151\143"
+
+local CHOICE_X = 290
+local CHOICE_Y = 190
+local CHOICE_HEIGHT = 28
+local CHOICE_GAP = 12
+local CHOICE_HORIZONTAL_PADDING = 22
 
 
 local function signedModifier(nModifier)
@@ -44,6 +52,55 @@ local function radioMarker(bSelected)
     end
 
     return RADIO_UNSELECTED
+end
+
+
+local function measureChoiceTextWidth(control, sText)
+    local wText =
+        control.addTextWidget(
+            "sheettext",
+            tostring(sText or "")
+        )
+
+    if not wText then
+        return 0
+    end
+
+    local nWidth = wText.getSize()
+    wText.destroy()
+
+    return tonumber(nWidth) or 0
+end
+
+
+local function layoutChoiceControls(sStationaryText, sCautiousText)
+    local nStationaryWidth =
+        measureChoiceTextWidth(
+            stationary_choice,
+            sStationaryText
+        )
+        + CHOICE_HORIZONTAL_PADDING
+
+    local nCautiousWidth =
+        measureChoiceTextWidth(
+            cautious_choice,
+            sCautiousText
+        )
+        + CHOICE_HORIZONTAL_PADDING
+
+    stationary_choice.setStaticBounds(
+        CHOICE_X,
+        CHOICE_Y,
+        nStationaryWidth,
+        CHOICE_HEIGHT
+    )
+
+    cautious_choice.setStaticBounds(
+        CHOICE_X + nStationaryWidth + CHOICE_GAP,
+        CHOICE_Y,
+        nCautiousWidth,
+        CHOICE_HEIGHT
+    )
 end
 
 
@@ -77,14 +134,20 @@ local function refreshSkillControls()
         stationary_choice.setVisible(true)
         cautious_choice.setVisible(true)
 
-        stationary_choice.setValue(
+        local sStationaryText =
             radioMarker(sSkillMode == "stationary")
             .. "  Stationary  +20%"
-        )
 
-        cautious_choice.setValue(
+        local sCautiousText =
             radioMarker(sSkillMode == "cautiousMovement")
             .. "  Cautious movement  +5%"
+
+        stationary_choice.setValue(sStationaryText)
+        cautious_choice.setValue(sCautiousText)
+
+        layoutChoiceControls(
+            sStationaryText,
+            sCautiousText
         )
     else
         selected_skill_value.setValue(
