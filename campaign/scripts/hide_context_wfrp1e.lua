@@ -8,6 +8,9 @@
 
     #10T is UI-only: mutually exclusive Concealment states use explicit radio
     markers so the required choice is visible before validation.
+
+    #10U keeps the same verified selection state but presents each choice as
+    a full input-style button row.
 ]]
 
 local nodeCharacter = nil
@@ -47,6 +50,15 @@ local function radioMarker(bSelected)
 end
 
 
+local function setChoiceButtonText(control, sText)
+    control.setText(
+        sText,
+        sText,
+        sText
+    )
+end
+
+
 local function clearResult()
     result_line_1.setValue("")
     result_line_2.setValue("")
@@ -77,12 +89,14 @@ local function refreshSkillControls()
         stationary_choice.setVisible(true)
         cautious_choice.setVisible(true)
 
-        stationary_choice.setValue(
+        setChoiceButtonText(
+            stationary_choice,
             radioMarker(sSkillMode == "stationary")
             .. "  Stationary  +20%"
         )
 
-        cautious_choice.setValue(
+        setChoiceButtonText(
+            cautious_choice,
             radioMarker(sSkillMode == "cautiousMovement")
             .. "  Cautious movement  +5%"
         )
