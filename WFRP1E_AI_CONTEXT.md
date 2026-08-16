@@ -1,6 +1,6 @@
 # WFRP1E Fantasy Grounds — AI Resume Context
 
-Last updated: 2026-08-16 07:51 Europe/Warsaw
+Last updated: 2026-08-16 13:03 Europe/Warsaw
 
 This is the single authoritative resume/checkpoint file for the Fantasy Grounds WFRP 1e project. Update this file in place; do not create overlapping context documents.
 
@@ -122,7 +122,7 @@ Rules ID selector (#10O):
 
 FGU #10O lesson: avoid eager top-level Lua package initialization using helpers such as `ipairs`; FGU produced `attempt to call global 'ipairs' (a nil value)`. Use lazy lookup/population. Do not reuse rejected #10L dynamic `windowlist.createWindowWithClass(...)` path.
 
-## 4. Standard Tests — verified through #10T
+## 4. Standard Tests — verified through #10U
 
 ### Repeated acquisition
 Derived acquisition count groups owned Skills by stable `rulesId`; no persisted rank.
@@ -217,7 +217,7 @@ Verified implementation:
 #10Q merge:
 `0b774c1492d44db1d9618da55754e603f7d5815d`
 
-### Hide (#10R–#10T PASS)
+### Hide (#10R–#10U PASS)
 Rulebook-audited base:
 `Current Initiative + Current Cool - target Initiative`
 
@@ -271,14 +271,23 @@ Verified #10T UX:
 #10T merge:
 `318cf48e9b81996f3b277713d52cfec56ebc567a`
 
-### Popup UX direction
-Verified popup UX includes readable dark-frame text, hover-highlight rows, explicit X close on selectors, search/scroll on the long Rules ID selector, and explicit radio markers for mutually exclusive Hide choices.
+Verified #10U UX:
+- Stationary/Cautious choices use light input-style `fieldlight` controls with readable dark text;
+- hover/pressed `fieldfocus` borders match the light-control frame margins and render correctly;
+- each choice width is measured from the rendered `sheettext` label via a temporary text widget, then applied with `setStaticBounds`;
+- Stationary is therefore narrower than Cautious movement, with a small consistent gap between controls;
+- explicit `○` / `●` radio feedback and whole-visible-control click behavior remain intact;
+- selection validation and Hide target calculations are unchanged;
+- layout code is transient UI-only and changes no mechanics or persistence.
 
-Next requested UX refinement:
-- make the radio choices visually stronger by styling the option rows like the existing light input controls;
-- preferred direction: whole Stationary/Cautious row looks like a read-only input-style selectable control, with the radio marker at the left;
-- preserve whole-row click target, hover state, and mutually exclusive `○` / `●` feedback;
-- UI only; no mechanics or persistence change.
+#10U verified head:
+`5049ef93c66c70d108fcbd5befe31f7ecf3bf198`
+
+#10U merge:
+`78f6e0a17d440a371abd58d752bd3061297a3d16`
+
+### Popup UX direction
+Verified popup UX includes readable dark-frame text, hover-highlight rows, explicit X close on selectors, search/scroll on the long Rules ID selector, explicit radio markers for mutually exclusive Hide choices, and content-sized light input-style Hide choice controls with hover focus borders.
 
 ## 5. Verified checkpoint history
 
@@ -303,6 +312,7 @@ Next requested UX refinement:
 - #10R Hide target-Initiative BASE preview — PASS
 - #10S Hide selected-Skill modifier preview — PASS
 - #10T radio-button UX for Hide choices — PASS
+- #10U input-style/content-sized Hide choice UX — PASS
 
 Rejected experiments / lessons:
 - #9C.1 full-window focus-overlay attempts — removed; do not retry.
@@ -311,8 +321,8 @@ Rejected experiments / lessons:
 
 ## 6. Current verified baseline
 
-Current verified mechanics/UI merge after #10T:
-- `318cf48e9b81996f3b277713d52cfec56ebc567a`
+Current verified mechanics/UI merge after #10U:
+- `78f6e0a17d440a371abd58d752bd3061297a3d16`
 
 Context updates are metadata-only and may make `main` newer than the verified merge.
 
@@ -330,19 +340,20 @@ Important current files include:
 - `campaign/record_hide_context_wfrp1e.xml`
 - `campaign/record_skill_rules_id_selector_wfrp1e.xml`
 - `campaign/scripts/char_skill_wfrp1e.lua`
+- `campaign/scripts/hide_context_wfrp1e.lua`
 - Character/Career/Experience/Advancement managers.
 
 ## 7. Next checkpoint
 
-#10U — NOT IMPLEMENTED / NOT FROZEN.
+#10V — NOT IMPLEMENTED / NOT FROZEN.
 
 Resume intent:
-- UI-only polish for HIDE CONTEXT Concealment state;
-- style each mutually exclusive choice as an input-like light rectangle consistent with Target Initiative / Other modifier fields;
-- keep the explicit radio marker at the left of each option (`○` / `●`);
-- whole option row remains clickable and hover-highlighted;
-- preserve existing selection, validation and calculation behavior exactly;
-- no XML/Lua mechanics changes beyond presentation wiring required to render the rows;
-- no dice, persistence, Character, Career, XP, or Skill-effect changes.
-
-After #10U is separately verified, return to Hide execution: roll the already-verified final Hide target through the existing d100 engine.
+- return to Hide mechanics execution now that the preview and choice UX are verified;
+- roll the already-verified final Hide target through the existing d100 Standard Test engine;
+- preserve CALCULATE as a no-dice preview and add an explicit executable roll path;
+- use one authoritative Hide resolver for both preview and roll rather than duplicating formula logic;
+- invalid/incomplete context must launch no dice;
+- success remains `D100 <= final target`, with equality succeeding;
+- use the verified FGU percentile construction: pass only `{ "d100" }`;
+- report the resolved Hide breakdown, final target and success/failure in chat;
+- no target clamp, persistence, automatic Skill stacking, Character/Career/XP changes, or new WFRP mechanics.
