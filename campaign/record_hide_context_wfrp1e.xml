@@ -5,8 +5,9 @@
     <!--
         #10S transient Hide context preview
         #10U UI-only input-style Concealment state choices
+        #10V explicit Hide dice execution from the same validated context
 
-        No persistent data. No roll.
+        No persistent data.
         The GM supplies target Initiative; for a group, use the highest
         Initiative in that group.
 
@@ -74,9 +75,15 @@
             </label>
 
             <label name="hint2">
-                <bounds>24,74,-24,38</bounds>
+                <bounds>24,74,-24,20</bounds>
                 <color>#FFFFFF</color>
                 <static text="Only the Skill row you explicitly used contributes here. Rural/Urban applicability remains a GM decision; other owned Skills are not auto-stacked." />
+            </label>
+
+            <label name="hint3">
+                <bounds>24,96,-24,20</bounds>
+                <color>#FFFFFF</color>
+                <static text="CALCULATE previews the final target; ROLL executes that same calculation." />
             </label>
 
             <label name="target_initiative_label">
@@ -225,6 +232,22 @@
                 <nodrag />
                 <nodragselect />
             </stringcontrol>
+
+            <buttoncontrol name="roll_button">
+                <bounds>-294,400,130,30</bounds>
+                <font>sheettext</font>
+                <color>#FFFFFF</color>
+
+                <hover>
+                    <frame name="fieldfocus" offset="3,2,3,2" />
+                </hover>
+
+                <script>
+                    function onButtonPress()
+                        window.handleRoll()
+                    end
+                </script>
+            </buttoncontrol>
 
             <buttoncontrol name="calculate_button">
                 <bounds>-154,400,130,30</bounds>

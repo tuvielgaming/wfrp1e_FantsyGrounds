@@ -1,15 +1,18 @@
 --[[
     WFRP1E
-    Hide runtime-context preview dialog
+    Hide runtime-context dialog
 
     #10R verified the BASE formula.
     #10S adds one explicitly selected owned Hide Skill effect and a separate
-    Other GM modifier. All data remains transient and no dice are rolled.
+    Other GM modifier. All data remains transient.
 
     #10T is UI-only: mutually exclusive Concealment states use explicit radio
     markers so the required choice is visible before validation.
 
     #10U keeps those choices input-like and sizes them to their rendered text.
+
+    #10V preserves CALCULATE preview and adds explicit ROLL execution from the
+    same transient inputs and authoritative Hide resolver.
 ]]
 
 local nodeCharacter = nil
@@ -120,6 +123,36 @@ local function setResultMessage(sText)
 end
 
 
+local function getContext()
+    return {
+        targetInitiative = target_initiative.getValue(),
+        skillMode = sSkillMode,
+        otherModifier = other_modifier.getValue()
+    }
+end
+
+
+local function showResolutionError(tResult)
+    local sReason =
+        tostring(
+            tResult
+            and tResult.reason
+            or "invalid-context"
+        )
+
+    if sReason == "hide-skill-choice-required" then
+        setResultMessage(
+            "Choose Stationary +20% or Cautious movement +5% for the selected Concealment Skill."
+        )
+    else
+        setResultMessage(
+            "Unable to resolve Hide test: "
+            .. sReason
+        )
+    end
+end
+
+
 local function refreshSkillControls()
     local sLabel =
         DataSkillsWFRP1E.getDisplayLabel(
@@ -209,6 +242,12 @@ function onInit()
         "CALCULATE",
         "CALCULATE"
     )
+
+    roll_button.setText(
+        "ROLL",
+        "ROLL",
+        "ROLL"
+    )
 end
 
 
@@ -223,7 +262,7 @@ function setContext(nodeChar, sRulesId)
     refreshSkillControls()
     clearResult()
     setResultMessage(
-        "Enter target Initiative, choose any required Skill state, then press CALCULATE. No dice will be rolled."
+        "Enter context. CALCULATE previews; ROLL executes the same target."
     )
 end
 
@@ -255,28 +294,39 @@ function handleCalculate()
         HideContextManagerWFRP1E.resolvePreview(
             nodeCharacter,
             sSelectedSkillRulesId,
-            {
-                targetInitiative = target_initiative.getValue(),
-                skillMode = sSkillMode,
-                otherModifier = other_modifier.getValue()
-            }
+            getContext()
         )
 
     if not tResult.valid then
-        if tResult.reason == "hide-skill-choice-required" then
-            setResultMessage(
-                "Choose Stationary +20% or Cautious movement +5% for the selected Concealment Skill."
-            )
-        else
-            setResultMessage(
-                "Unable to resolve Hide preview: "
-                .. tostring(tResult.reason or "invalid-context")
-            )
-        end
-
+        showResolutionError(tResult)
         return false
     end
 
     setCalculatedResult(tResult)
+    return true
+end
+
+
+function handleRoll()
+    if not nodeCharacter then
+        return false
+    end
+
+    local tResult =
+        HideContextManagerWFRP1E.performTest(
+            nodeCharacter,
+            sSelectedSkillRulesId,
+            getContext()
+        )
+
+    if not tResult.valid
+        or tResult.launched ~= true
+    then
+        showResolutionError(tResult)
+        return false
+    end
+
+    setCalculatedResult(tResult)
+    close()
     return true
 end

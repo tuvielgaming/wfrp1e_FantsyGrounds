@@ -1,6 +1,6 @@
 --[[
     WFRP1E
-    Hide runtime-context preview resolver
+    Hide runtime-context resolver and roll execution
 
     Mechanics authority: WFRP 1e Core Rulebook, Hide / Ukrywanie sie and the
     relevant Skill descriptions.
@@ -22,12 +22,35 @@
     Silent Move is deliberately NOT a Hide modifier here; its audited effects
     belong to Listen/Sneak procedures.
 
+    #10V reuses the verified resolved target for percentile dice execution.
+    The manager still stores nothing and does not clamp the resulting target.
+
     Still excluded:
         - no automatic Skill applicability or multi-Skill stacking
-        - no dice roll
         - no persistent target/group data
         - no target clamp
 ]]
+
+local ROLL_TYPE = "wfrp1e_hide_test"
+
+
+function onInit()
+    Comm.addKeyedEventHandler(
+        "onDiceLanded",
+        ROLL_TYPE,
+        onHideDiceLanded
+    )
+end
+
+
+function onClose()
+    Comm.removeKeyedEventHandler(
+        "onDiceLanded",
+        ROLL_TYPE,
+        onHideDiceLanded
+    )
+end
+
 
 local function failure(sReason)
     return {
@@ -44,6 +67,33 @@ local function normalizeId(sValue)
     ):match(
         "^%s*(.-)%s*$"
     )
+end
+
+
+local function signedModifier(nModifier)
+    nModifier = tonumber(nModifier) or 0
+
+    if nModifier >= 0 then
+        return "+" .. tostring(nModifier)
+    end
+
+    return tostring(nModifier)
+end
+
+
+local function getCharacterDisplayName(nodeChar)
+    local sName =
+        DB.getValue(
+            nodeChar,
+            "name",
+            ""
+        )
+
+    if sName == "" then
+        return "Character"
+    end
+
+    return sName
 end
 
 
@@ -207,4 +257,127 @@ function resolvePreview(nodeChar, sRulesId, tContext)
             + tSkill.modifier
             + nOtherModifier
     }
+end
+
+
+function performTest(nodeChar, sRulesId, tContext)
+    local tResolved =
+        resolvePreview(
+            nodeChar,
+            sRulesId,
+            tContext
+        )
+
+    if not tResolved.valid then
+        return tResolved
+    end
+
+    local tRollData = {
+        testId = tResolved.testId,
+        rulesId = tResolved.rulesId,
+        characterName = getCharacterDisplayName(nodeChar),
+        initiative = tResolved.initiative,
+        cool = tResolved.cool,
+        targetInitiative = tResolved.targetInitiative,
+        baseTarget = tResolved.baseTarget,
+        skillModifier = tResolved.skillModifier,
+        skillMode = tResolved.skillMode,
+        otherModifier = tResolved.otherModifier,
+        target = tResolved.target
+    }
+
+    -- FGU d100 automatically supplies the companion d10. Pass only d100;
+    -- explicitly adding d10 would reproduce the rejected #10I extra-die bug.
+    Comm.throwDice(
+        ROLL_TYPE,
+        { "d100" },
+        0,
+        "[WFRP1E HIDE] hide vs "
+            .. tostring(tResolved.target)
+            .. "%",
+        tRollData
+    )
+
+    tResolved.launched = true
+    return tResolved
+end
+
+
+function onHideDiceLanded(draginfo)
+    if not draginfo then
+        return
+    end
+
+    local tRollData =
+        draginfo.getCustomData()
+
+    if type(tRollData) ~= "table" then
+        return
+    end
+
+    local nTarget = tonumber(tRollData.target)
+    if nTarget == nil then
+        return
+    end
+
+    local tDiceData =
+        draginfo.getDiceData()
+
+    local nRoll =
+        tDiceData
+        and tonumber(tDiceData.total)
+        or nil
+
+    if nRoll == nil then
+        return
+    end
+
+    local sOutcome =
+        nRoll <= nTarget
+        and "SUCCESS"
+        or "FAILURE"
+
+    local sSkillLabel =
+        DataSkillsWFRP1E.getDisplayLabel(
+            tostring(tRollData.rulesId or "")
+        )
+
+    local sSkillMode = ""
+    if tRollData.skillMode == "stationary" then
+        sSkillMode = " (stationary)"
+    elseif tRollData.skillMode == "cautiousMovement" then
+        sSkillMode = " (cautious movement)"
+    end
+
+    local sText =
+        "[WFRP1E HIDE] "
+        .. tostring(tRollData.characterName or "Character")
+        .. " | Roll "
+        .. tostring(nRoll)
+        .. " | Base "
+        .. tostring(tRollData.baseTarget or 0)
+        .. "% (I "
+        .. tostring(tRollData.initiative or 0)
+        .. "% + Cl "
+        .. tostring(tRollData.cool or 0)
+        .. "% - Target I "
+        .. tostring(tRollData.targetInitiative or 0)
+        .. "%) | Skill "
+        .. sSkillLabel
+        .. " "
+        .. signedModifier(tRollData.skillModifier)
+        .. "%"
+        .. sSkillMode
+        .. " | Other "
+        .. signedModifier(tRollData.otherModifier)
+        .. "% | Target "
+        .. tostring(nTarget)
+        .. "% | "
+        .. sOutcome
+
+    Comm.deliverChatMessage({
+        text = sText,
+        mode = "system",
+        type = ROLL_TYPE
+    })
 end
