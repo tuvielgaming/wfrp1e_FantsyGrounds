@@ -4,6 +4,7 @@
 
     <!--
         #10S transient Hide context preview
+        #10U input-style radio choice presentation
 
         No persistent data. No roll.
         The GM supplies target Initiative; for a group, use the highest
@@ -110,69 +111,63 @@
                 <invisible />
             </label>
 
-            <stringcontrol name="stationary_choice">
-                <bounds>290,190,180,28</bounds>
+            <buttoncontrol name="stationary_choice">
+                <anchored height="28">
+                    <left offset="290" />
+                    <top offset="190" />
+                    <sizelimits>
+                        <minimum>
+                            <width>145</width>
+                        </minimum>
+                    </sizelimits>
+                </anchored>
                 <font>sheettext</font>
-                <color>#FFFFFF</color>
-                <readonly />
-                <nodrag />
-                <nodragselect />
+                <color>#000000</color>
+                <frame name="fieldlight" />
                 <invisible />
 
                 <stateframe>
-                    <hover name="fieldfocus" offset="3,2,3,2" />
-                    <pressed name="fieldfocus" offset="3,2,3,2" />
+                    <hover name="fieldfocus" />
+                    <pressed name="fieldfocus" />
                 </stateframe>
 
                 <cursor><hover>hand</hover></cursor>
 
                 <script>
-                    function onClickDown(button, x, y)
-                        if button == 1 then return true end
-                        return false
-                    end
-
-                    function onClickRelease(button, x, y)
-                        if button == 1 then
-                            window.setSkillMode("stationary")
-                            return true
-                        end
-                        return false
+                    function onButtonPress()
+                        window.setSkillMode("stationary")
                     end
                 </script>
-            </stringcontrol>
+            </buttoncontrol>
 
-            <stringcontrol name="cautious_choice">
-                <bounds>480,190,-24,28</bounds>
+            <buttoncontrol name="cautious_choice">
+                <anchored height="28">
+                    <left parent="stationary_choice" anchor="right" offset="10" />
+                    <top offset="190" />
+                    <sizelimits>
+                        <minimum>
+                            <width>190</width>
+                        </minimum>
+                    </sizelimits>
+                </anchored>
                 <font>sheettext</font>
-                <color>#FFFFFF</color>
-                <readonly />
-                <nodrag />
-                <nodragselect />
+                <color>#000000</color>
+                <frame name="fieldlight" />
                 <invisible />
 
                 <stateframe>
-                    <hover name="fieldfocus" offset="3,2,3,2" />
-                    <pressed name="fieldfocus" offset="3,2,3,2" />
+                    <hover name="fieldfocus" />
+                    <pressed name="fieldfocus" />
                 </stateframe>
 
                 <cursor><hover>hand</hover></cursor>
 
                 <script>
-                    function onClickDown(button, x, y)
-                        if button == 1 then return true end
-                        return false
-                    end
-
-                    function onClickRelease(button, x, y)
-                        if button == 1 then
-                            window.setSkillMode("cautiousMovement")
-                            return true
-                        end
-                        return false
+                    function onButtonPress()
+                        window.setSkillMode("cautiousMovement")
                     end
                 </script>
-            </stringcontrol>
+            </buttoncontrol>
 
             <label name="other_modifier_label">
                 <bounds>24,230,250,20</bounds>
