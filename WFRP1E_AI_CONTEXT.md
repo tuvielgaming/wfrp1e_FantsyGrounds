@@ -1,6 +1,6 @@
 # WFRP1E Fantasy Grounds — AI Resume Context
 
-Last updated: 2026-08-16 13:03 Europe/Warsaw
+Last updated: 2026-08-16 13:56 Europe/Warsaw
 
 This is the single authoritative resume/checkpoint file for the Fantasy Grounds WFRP 1e project. Update this file in place; do not create overlapping context documents.
 
@@ -122,7 +122,7 @@ Rules ID selector (#10O):
 
 FGU #10O lesson: avoid eager top-level Lua package initialization using helpers such as `ipairs`; FGU produced `attempt to call global 'ipairs' (a nil value)`. Use lazy lookup/population. Do not reuse rejected #10L dynamic `windowlist.createWindowWithClass(...)` path.
 
-## 4. Standard Tests — verified through #10U
+## 4. Standard Tests — verified through #10V
 
 ### Repeated acquisition
 Derived acquisition count groups owned Skills by stable `rulesId`; no persisted rank.
@@ -134,6 +134,8 @@ Numeric repeat rule only for:
 `repeat bonus = (acquisitions - 1) * 10%`
 
 Musicianship / Speak Additional Language / Specialist Weapon use repeated acquisitions to broaden coverage, not this numeric bonus.
+
+Duplicate acquisitions of Concealment Rural/Urban are valid owned Skill acquisitions but do NOT add extra Hide percentage. Concealment has no repeated-acquisition numeric rule; its Hide effect remains one selected +20% stationary OR +5% cautious-movement effect.
 
 ### Foundation
 `scripts/data_standard_tests_wfrp1e.lua` stores stable named Standard Test IDs, characteristic/formula, candidate Skill rulesIds, default modifier and tags/context requirements.
@@ -217,7 +219,7 @@ Verified implementation:
 #10Q merge:
 `0b774c1492d44db1d9618da55754e603f7d5815d`
 
-### Hide (#10R–#10U PASS)
+### Hide (#10R–#10V PASS)
 Rulebook-audited base:
 `Current Initiative + Current Cool - target Initiative`
 
@@ -229,7 +231,14 @@ Important audited correction:
 - appropriate Concealment Rural/Urban contributes +20% while stationary OR +5% while moving cautiously;
 - Rural/Urban applicability remains a GM decision;
 - Other GM modifier is a separate explicit input;
-- another owned Hide-related Skill is not auto-stacked.
+- different owned Hide-related Skills are not automatically combined;
+- repeated acquisitions of Concealment do not increase its Hide modifier.
+
+Clarification of "not automatically stacked":
+- if the Character owns both Shadowing and Concealment, using Shadowing applies only Shadowing +10%;
+- using Concealment applies only the selected Concealment +20%/+5%;
+- the system does not add both effects just because both Skills are owned;
+- owning Concealment multiple times also does not multiply or add its +20%/+5% effect.
 
 Verified #10S implementation:
 - exact clicked owned Skill `rulesId` is passed into transient HIDE CONTEXT;
@@ -238,7 +247,7 @@ Verified #10S implementation:
 - only the explicitly used Skill row contributes;
 - Other GM modifier can be added separately;
 - no target clamp;
-- preview only: NO dice yet;
+- preview only at #10S;
 - no Character/Skill/Career/XP persistence;
 - X closes without side effects.
 
@@ -248,8 +257,6 @@ Verified example with I 35 / Cl 24 / target I 40:
 - Concealment Stationary +20 => 39%;
 - Concealment Cautious +5 => 24%;
 - Cautious +5 and Other +10 => 34%.
-
-If Character owns both Shadowing and Concealment, opening from Shadowing uses only +10; opening from Concealment uses only the selected +20/+5. No automatic +30/+15 stack.
 
 #10S verified head:
 `ab5356bb1ef90f1876a3d4c040301a889ed335e1`
@@ -286,6 +293,23 @@ Verified #10U UX:
 #10U merge:
 `78f6e0a17d440a371abd58d752bd3061297a3d16`
 
+Verified #10V execution:
+- CALCULATE remains a no-dice preview using the same authoritative Hide resolver;
+- explicit ROLL uses `HideContextManagerWFRP1E.performTest(...)`, which first resolves the same final target;
+- invalid/incomplete Concealment choice launches no dice;
+- valid roll passes only `{ "d100" }`, preserving the verified FGU percentile pair behavior;
+- popup closes after a valid roll is launched;
+- chat reports character, roll, base I + Cl - target I breakdown, selected Skill modifier/state, Other modifier, final target and SUCCESS/FAILURE;
+- success remains `D100 <= target`, including equality;
+- no target clamp or persistence;
+- verified user observation: adding Concealment multiple times does not change Hide preview/calculation/roll, as intended by the current repeated-acquisition rules.
+
+#10V verified head:
+`8dbebdeeabb9540caec22ce5fbb0b9c0bf48cfee`
+
+#10V merge:
+`dd45c30685498022d3f7f40bc3cee2db21ff673f`
+
 ### Popup UX direction
 Verified popup UX includes readable dark-frame text, hover-highlight rows, explicit X close on selectors, search/scroll on the long Rules ID selector, explicit radio markers for mutually exclusive Hide choices, and content-sized light input-style Hide choice controls with hover focus borders.
 
@@ -313,6 +337,7 @@ Verified popup UX includes readable dark-frame text, hover-highlight rows, expli
 - #10S Hide selected-Skill modifier preview — PASS
 - #10T radio-button UX for Hide choices — PASS
 - #10U input-style/content-sized Hide choice UX — PASS
+- #10V executable Hide roll — PASS
 
 Rejected experiments / lessons:
 - #9C.1 full-window focus-overlay attempts — removed; do not retry.
@@ -321,8 +346,8 @@ Rejected experiments / lessons:
 
 ## 6. Current verified baseline
 
-Current verified mechanics/UI merge after #10U:
-- `78f6e0a17d440a371abd58d752bd3061297a3d16`
+Current verified mechanics/UI merge after #10V:
+- `dd45c30685498022d3f7f40bc3cee2db21ff673f`
 
 Context updates are metadata-only and may make `main` newer than the verified merge.
 
@@ -345,15 +370,11 @@ Important current files include:
 
 ## 7. Next checkpoint
 
-#10V — NOT IMPLEMENTED / NOT FROZEN.
+#10W — NOT SELECTED / NOT IMPLEMENTED / NOT FROZEN.
 
 Resume intent:
-- return to Hide mechanics execution now that the preview and choice UX are verified;
-- roll the already-verified final Hide target through the existing d100 Standard Test engine;
-- preserve CALCULATE as a no-dice preview and add an explicit executable roll path;
-- use one authoritative Hide resolver for both preview and roll rather than duplicating formula logic;
-- invalid/incomplete context must launch no dice;
-- success remains `D100 <= final target`, with equality succeeding;
-- use the verified FGU percentile construction: pass only `{ "d100" }`;
-- report the resolved Hide breakdown, final target and success/failure in chat;
-- no target clamp, persistence, automatic Skill stacking, Character/Career/XP changes, or new WFRP mechanics.
+- #10V Hide execution is complete and frozen; do not reopen it unless a regression is found;
+- next session, first select the next small Standard Test/mechanics slice after auditing the rulebook and existing remaining data;
+- do not assume or invent #10W mechanics before that audit/selection;
+- preserve the one-checkpoint-at-a-time branch + draft PR + explicit FGU verification workflow;
+- current `main` is safe to resume from after pulling the metadata-only context update.
